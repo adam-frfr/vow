@@ -1,0 +1,44 @@
+{
+  "candle-lights": {
+    "frames": 90,
+    "width": 787,
+    "height": 720,
+    "mode": "glow"
+  },
+  "match-strike": {
+    "frames": 90,
+    "width": 640,
+    "height": 1146,
+    "mode": "glowbg"
+  },
+  "dandelion": {
+    "frames": 110,
+    "width": 627,
+    "height": 592,
+    "mode": "solid"
+  },
+  "orchid": {
+    "frames": 100,
+    "width": 1100,
+    "height": 719,
+    "mode": "solid"
+  },
+  "daffodil": {
+    "frames": 90,
+    "width": 601,
+    "height": 641,
+    "mode": "solid"
+  },
+  "gold-glitter": {
+    "frames": 32,
+    "width": 400,
+    "height": 711,
+    "mode": "glow"
+  },
+  "ink-bloom": {
+    "frames": 70,
+    "width": 640,
+    "height": 360,
+    "mode": "mask"
+  }
+}
