@@ -1,0 +1,63 @@
+/* Matching printed invitation: a 5×7 card sized with container units so it
+   scales from a gallery thumbnail to a full-size print. */
+.ic {
+  container-type: inline-size;
+  position: relative;
+  aspect-ratio: 5 / 7;
+  width: 100%;
+  overflow: hidden;
+  background: var(--c-bg);
+  color: var(--c-fg);
+  font-family: var(--c-display);
+  text-align: center;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .08), 0 24px 50px -24px rgba(0, 0, 0, .35);
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+.ic * { box-sizing: border-box; margin: 0; }
+.ic-art { position: absolute; pointer-events: none; user-select: none; }
+.ic-art--wreath { left: 50%; top: 46%; width: 82%; max-height: 60%; object-fit: contain; translate: -50% -50%; }
+.ic-art--crown { left: 50%; top: 5%; width: 54%; max-height: 30%; object-fit: contain; translate: -50% 0; }
+.ic-art--tr { right: -6%; top: -4%; width: 52%; rotate: 180deg; transform: scaleX(-1); }
+.ic-art--bl { left: -6%; bottom: -4%; width: 52%; }
+.ic-liner { position: absolute; inset: 0; background-size: 52cqw; background-repeat: repeat; }
+.ic--liner .ic-text { position: absolute; inset: 7.5cqw; background: var(--c-bg); box-shadow: 0 0 0 1px color-mix(in srgb, var(--c-fg) 18%, transparent); }
+
+.ic-text { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0 20cqw; gap: 2.2cqw; }
+.ic--crown .ic-text { justify-content: flex-start; padding: 40cqw 12cqw 0; }
+.ic--corners .ic-text, .ic--minimal .ic-text, .ic--liner .ic-text { padding-inline: 12cqw; }
+.ic--minimal .ic-text { inset: 5cqw; outline: 1px solid color-mix(in srgb, var(--c-fg) 30%, transparent); outline-offset: -1.6cqw; }
+
+.ic-top, .ic-invite, .ic-extra, .ic-place { font-style: italic; font-size: 3.3cqw; line-height: 1.55; color: var(--c-muted); letter-spacing: .02em; }
+.ic-top { text-transform: lowercase; margin-bottom: 1cqw; }
+.ic-head, .ic-core, .ic-foot { display: flex; flex-direction: column; align-items: center; gap: 1.6cqw; }
+/* Wreath: opening line above, names + date inside the wreath, details below. */
+.ic--wreath .ic-text { justify-content: space-between; padding: 8cqw 14cqw 7cqw; }
+.ic--wreath .ic-core { position: absolute; left: 0; right: 0; top: 46%; translate: 0 -50%; padding: 0 26cqw; }
+.ic--wreath .ic-names { font-size: 9.6cqw; }
+.ic--wreath .ic-top { margin: 0; }
+.ic--wreath .ic-date { font-size: 3cqw; letter-spacing: .16em; gap: 1.8cqw; }
+.ic-names { display: flex; flex-direction: column; align-items: center; font-family: var(--c-script); font-weight: 400; font-size: 10.5cqw; line-height: 1.05; color: var(--c-fg); }
+.ic-and { font-family: var(--c-display); font-style: italic; font-size: 3.4cqw; color: var(--c-muted); margin: 1cqw 0; }
+.ic-invite { margin-top: 0; }
+.ic-date { display: flex; align-items: center; justify-content: center; gap: 2.4cqw; font-size: 3.5cqw; letter-spacing: .25em; text-transform: uppercase; margin-top: 1.6cqw; }
+.ic-date i { width: 1px; height: 5cqw; background: currentColor; opacity: .55; }
+.ic-venue { font-size: 3.4cqw; letter-spacing: .22em; text-transform: uppercase; margin-top: 1.6cqw; }
+.ic-place { margin-top: -1cqw; }
+.ic-extra { margin-top: 2cqw; }
+
+.ic--back { background: var(--c-back-bg); color: var(--c-back-fg); }
+.ic-back-inner { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3cqw; padding: 12cqw; }
+.ic-mono { font-family: var(--c-script); font-size: 15cqw; line-height: 1; margin-bottom: 4cqw; }
+.ic-back-k { font-size: 3cqw; letter-spacing: .26em; text-transform: uppercase; opacity: .85; }
+.ic-qr { width: 34cqw; height: 34cqw; margin: 2cqw 0; image-rendering: pixelated; border-radius: 2cqw; }
+.ic-url { font-style: italic; font-size: 3.6cqw; letter-spacing: .03em; }
+
+/* Print: exactly one 5×7" card per page, front then back. */
+@media print {
+  @page { size: 5in 7in; margin: 0; }
+  body * { visibility: hidden; }
+  .ic-print, .ic-print * { visibility: visible; }
+  .ic-print { position: absolute; left: 0; top: 0; width: 5in; }
+  .ic-print .ic { width: 5in; height: 7in; box-shadow: none; break-after: page; }
+}

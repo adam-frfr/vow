@@ -1,9 +1,16 @@
 import type { CSSProperties } from "react";
 import "./invite.css";
 import { initials, type Customization, type InviteContent } from "@/lib/content";
-import { getTheme, googleFontsHref, img, SAMPLE_GALLERY, templateOf, type TemplateId } from "@/lib/themes";
+import { luminance, resolveDecorStyle } from "@/lib/decor";
+import { getTheme, googleFontsHref, img, SAMPLE_GALLERY, TEMPLATE_IDS, templateOf, type TemplateId } from "@/lib/themes";
 import { buildCtx, type Ctx, type Mode, type Wish } from "./ctx";
+import { DecorCorners } from "./Decor";
 import { Intro } from "./Intro";
+import { PageEffects } from "./PageEffects";
+import { StickerLayer, type StickerEditing } from "./StickerLayer";
+import { Atelier } from "./templates/Atelier";
+import { Bloom } from "./templates/Bloom";
+import { Candlelit } from "./templates/Candlelit";
 import { Botanical } from "./templates/Botanical";
 import { Cinematic } from "./templates/Cinematic";
 import { Classic } from "./templates/Classic";
@@ -36,7 +43,13 @@ const TEMPLATES: Record<TemplateId, (p: { ctx: Ctx }) => React.ReactNode> = {
   split: Split,
   botanical: Botanical,
   letter: Letter,
+  atelier: Atelier,
+  candlelit: Candlelit,
+  bloom: Bloom,
 };
+
+/** Designs that place their own florals (no generic corner overlay). */
+const SELF_DECORATING: TemplateId[] = ["atelier", "candlelit", "bloom", "gallery", "gazette", "swiss", "pop", "editorial"];
 
 export interface InviteSiteProps {
   themeId: string;
@@ -49,9 +62,11 @@ export interface InviteSiteProps {
   slug?: string;
   /** Force a template (theme gallery "try this layout"). */
   template?: TemplateId;
+  /** Editor only: drag/resize/rotate placed art in the preview. */
+  stickerEditing?: StickerEditing;
 }
 
-export function InviteSite({ themeId, content, customization: cz = {}, photos = [], wishes = [], mode, slug, template }: InviteSiteProps) {
+export function InviteSite({ themeId, content, customization: cz = {}, photos = [], wishes = [], mode, slug, template, stickerEditing }: InviteSiteProps) {
   const theme = getTheme(themeId);
   const fonts = {
     display: cz.displayFont || theme.fonts.display,
@@ -73,17 +88,51 @@ export function InviteSite({ themeId, content, customization: cz = {}, photos = 
     "--sticky-top": mode === "demo" ? "64px" : "0px",
   } as CSSProperties;
 
-  const ctx = buildCtx({ theme, c: content, mode, slug, coverUrl: cz.coverUrl, photos, sampleGallery: SAMPLE_GALLERY, wishes });
-  const Template = TEMPLATES[template ?? templateOf(theme)];
+  const tplId: TemplateId =
+    template ?? (cz.template && (TEMPLATE_IDS as string[]).includes(cz.template) ? (cz.template as TemplateId) : templateOf(theme));
+  const { decor, style: axes } = resolveDecorStyle(theme, tplId, { decor: cz.decor, style: cz.style });
+  const dark = luminance(cz.bg || p.bg) < 0.12;
+  const ctx = buildCtx({
+    theme,
+    c: content,
+    mode,
+    slug,
+    coverUrl: cz.coverUrl,
+    photos,
+    sampleGallery: SAMPLE_GALLERY,
+    wishes,
+    template: tplId,
+    decor,
+    style: axes,
+    dark,
+  });
+  const Template = TEMPLATES[tplId];
+  const effects = { ...(theme.effects ?? {}), ...(cz.effects ?? {}) };
+  const stickers = cz.stickers ?? theme.stickers ?? [];
 
   return (
-    <div className="inv" style={style} data-mode={mode} data-case={theme.displayCase === "upper" ? "upper" : "normal"}>
+    <div
+      className="inv"
+      style={style}
+      data-mode={mode}
+      data-case={theme.displayCase === "upper" ? "upper" : "normal"}
+      data-buttons={axes.buttons}
+      data-density={axes.density}
+      data-headings={axes.headings !== "theme" ? axes.headings : undefined}
+      data-photo={axes.photo}
+      data-sections={axes.sections}
+      data-tone={dark ? "dark" : "light"}
+      data-photohover={effects.photoHover ? "" : undefined}
+    >
       <link rel="stylesheet" href={googleFontsHref([fonts.display, fonts.body, fonts.script])} precedence="default" />
       {mode === "live" && content.intro && (
         <Intro image={img(ctx.hero, 1600)} initials={initials(content)} names={`${ctx.p1} & ${ctx.p2}`} date={ctx.date} />
       )}
+      <PageEffects effects={effects} />
+      {!SELF_DECORATING.includes(tplId) && <DecorCorners ctx={ctx} />}
       <Template ctx={ctx} />
       <span className="inv-made">Made with Vow</span>
+      {(stickers.length > 0 || stickerEditing) && <StickerLayer stickers={stickers} editing={stickerEditing} />}
     </div>
   );
 }

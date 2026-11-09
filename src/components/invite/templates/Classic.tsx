@@ -112,7 +112,7 @@ export function Classic({ ctx }: { ctx: Ctx }) {
             </ol>
           ),
           gallery: () => (
-            <div className="cl-grid">
+            <div className="cl-grid gal-tpl">
               {ctx.gallery.map((src, i) => (
                 <div key={i} className="cl-grid-item">
                   <GalleryImg src={src} w={700} />

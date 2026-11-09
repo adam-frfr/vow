@@ -1,0 +1,54 @@
+/* WATERCOLOUR ATELIER: painted florals on paper */
+.t-at { --paper: color-mix(in srgb, var(--bg) 70%, #fff); --hair: color-mix(in srgb, var(--accent) 30%, transparent); background: var(--bg); }
+.inv[data-tone="dark"] .t-at { --paper: color-mix(in srgb, var(--bg) 88%, #fff); }
+.at-hero { position: relative; min-height: var(--hero-h); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: clamp(3rem, 8cqi, 5rem) 1.25rem 2.5rem; overflow: hidden; }
+.at-corner { position: absolute; width: clamp(150px, 27cqi, 380px); pointer-events: none; }
+.at-corner--tl { top: -1%; left: -3%; transform: scaleX(-1); }
+.at-corner--br { bottom: -1%; right: -3%; transform: scaleY(-1); }
+.at-kicker { color: var(--muted); position: relative; }
+.at-wreath { position: relative; width: min(84cqi, 560px); margin: 1.2rem auto .4rem; display: grid; place-items: center; }
+.at-wreath > .at-wreath-art { grid-area: 1 / 1; width: 100%; }
+.at-names { grid-area: 1 / 1; position: relative; display: flex; flex-direction: column; align-items: center; line-height: .98; padding: 0 12%; transform: translateY(-9%); }
+.at-names .d { font-size: clamp(2.4rem, 8.5cqi, 4.6rem); }
+.at-and { font-size: clamp(2rem, 6cqi, 3.2rem); color: var(--accent); margin: .05em 0; }
+.at-tag { position: relative; font-style: italic; color: var(--muted); max-width: 420px; }
+.at-date { position: relative; font-size: clamp(1.9rem, 5cqi, 2.8rem); color: var(--accent); margin: .8rem 0 .2rem !important; }
+.at-count { position: relative; justify-content: center; margin-top: 1.6rem; }
+.at-count div { background: var(--paper); padding: .8rem .9rem .6rem; border-radius: 999px 999px 14px 14px; min-width: 4.6rem; box-shadow: 0 10px 24px -18px rgba(0,0,0,.4); }
+.at-nav { position: relative; display: flex; flex-wrap: wrap; justify-content: center; gap: .3rem 1.4rem; margin-top: 2.2rem; font-size: .66rem; letter-spacing: .24em; text-transform: uppercase; }
+.at-nav a { text-decoration: none; color: var(--muted); }
+.at-nav a:hover { color: var(--accent); }
+
+.at-sec { padding: clamp(2.2rem, 6cqi, 3.6rem) clamp(1rem, 4cqi, 2rem); }
+.at-card { position: relative; max-width: 820px; margin: 0 auto; background: var(--paper); padding: clamp(2.6rem, 7cqi, 4.2rem) clamp(1.4rem, 6cqi, 4rem) clamp(2.4rem, 6cqi, 3.6rem); text-align: center; box-shadow: 0 1px 2px rgba(0,0,0,.05), 0 30px 60px -40px rgba(0,0,0,.35); border-radius: 4px; }
+.at-crown { width: min(480px, 76%); margin: calc(-1 * clamp(4.2rem, 11cqi, 6.4rem)) auto .8rem; }
+.at-sec-k { font-size: .62rem; letter-spacing: .32em; text-transform: uppercase; color: var(--muted); }
+.at-h { font-size: clamp(2.8rem, 8cqi, 4.2rem); color: var(--accent); margin: .2rem 0 1.6rem; }
+.at-card .blk-prose { max-width: 600px; margin: 0 auto; font-size: 1.06rem; line-height: 1.85; }
+.at-story { display: grid; gap: 1.6rem; align-items: center; text-align: left; }
+@container inv (min-width: 760px) { .at-story { grid-template-columns: 240px 1fr; gap: 2.6rem; } }
+.at-story-art { width: min(240px, 60%); margin: 0 auto; }
+.at-places { display: grid; gap: 1.2rem; }
+@container inv (min-width: 700px) { .at-places { grid-template-columns: 1fr 1fr; } }
+.at-place { padding: 1.8rem 1.2rem; border: 1px solid var(--hair); border-radius: 999px 999px 10px 10px; }
+.at-place .k { color: var(--accent); }
+.at-place-time { font-size: 2.2rem; margin: .4rem 0 .2rem; }
+.at-place-venue { font-size: 1.05rem; }
+.at-link { display: inline-block; margin-top: .9rem; font-size: .7rem; letter-spacing: .2em; text-transform: uppercase; text-decoration: none; color: var(--accent) !important; border-bottom: 1px solid var(--hair); padding-bottom: 2px; }
+.at-cal { margin-top: 1.4rem; }
+.at-map { border-radius: 12px; }
+.at-sched { list-style: none; margin: 0 auto; padding: 0; max-width: 560px; text-align: left; }
+.at-sched li { display: grid; grid-template-columns: auto 1fr auto; align-items: baseline; gap: .7rem; padding: .7rem 0; }
+.at-sched-title { font-size: 1.35rem; }
+.at-dots { border-bottom: 2px dotted var(--hair); transform: translateY(-5px); }
+.at-sched-time { font-size: .8rem; letter-spacing: .18em; text-transform: uppercase; color: var(--accent); }
+.at-sched-detail { grid-column: 1 / -1; font-size: .92rem; margin-top: -.3rem; }
+.at-gallery { display: grid; gap: 12px; grid-template-columns: repeat(2, 1fr); }
+@container inv (min-width: 760px) { .at-gallery { grid-template-columns: repeat(3, 1fr); } }
+.at-gallery img { width: 100%; aspect-ratio: 3/4; object-fit: cover; border-radius: 999px 999px 8px 8px; }
+.t-at .blk-wish { background: var(--bg); border-radius: 14px; }
+.t-at .blk-form { margin-top: .4rem; }
+.at-foot { text-align: center; padding: 3rem 1rem 1rem; }
+.at-wreath--sm { width: min(70cqi, 300px); }
+.at-mono { grid-area: 1 / 1; position: relative; font-size: clamp(2.6rem, 9cqi, 3.6rem); }
+.at-mono .s { font-size: .6em; color: var(--accent); margin: 0 .1em; }

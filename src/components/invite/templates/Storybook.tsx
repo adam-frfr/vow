@@ -95,7 +95,7 @@ export function Storybook({ ctx }: { ctx: Ctx }) {
             </ol>
           ),
           gallery: () => (
-            <div className="sb-pics">
+            <div className="sb-pics gal-tpl">
               {ctx.gallery.map((src, i) => (
                 <GalleryImg key={i} src={src} w={700} />
               ))}

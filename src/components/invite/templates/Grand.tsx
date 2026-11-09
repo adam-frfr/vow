@@ -104,7 +104,7 @@ export function Grand({ ctx }: { ctx: Ctx }) {
             </ol>
           ),
           gallery: () => (
-            <div className="gr-gallery">
+            <div className="gr-gallery gal-tpl">
               {ctx.gallery.map((src, i) => (
                 <div key={i}>
                   <GalleryImg src={src} w={900} />

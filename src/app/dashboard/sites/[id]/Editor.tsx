@@ -9,9 +9,16 @@ import { SAMPLE_WISHES, SECTION_LABELS, musicEmbed, type Customization, type Inv
 import { COLLECTIONS, FONT_CHOICES, getTheme, img, TEMPLATES, templateOf, THEMES, type CollectionId } from "@/lib/themes";
 import type { Wish } from "@/components/invite/ctx";
 import { ShareTools } from "./ShareTools";
+import { DecorPanel } from "./DecorPanel";
+import { EffectsPanel } from "./EffectsPanel";
+import { LibraryPanel } from "./LibraryPanel";
+import { anchorAt, measure } from "@/components/invite/StickerLayer";
+import { getFloral } from "@/lib/assets";
+import { luminance, resolveDecorStyle } from "@/lib/decor";
+import { newStickerId, type Sticker } from "@/lib/stickers";
 
 type Photo = { id: string; url: string };
-type Tab = "design" | "content" | "sections" | "photos" | "settings";
+type Tab = "design" | "decor" | "library" | "effects" | "content" | "sections" | "photos" | "settings";
 type SaveState = "saved" | "saving" | "unsaved" | "error";
 
 export function Editor({
@@ -40,6 +47,8 @@ export function Editor({
   const [save, setSave] = useState<SaveState>("saved");
   const [notice, setNotice] = useState("");
   const [showPreviewMobile, setShowPreviewMobile] = useState(false);
+  const [selectedSticker, setSelectedSticker] = useState<string | null>(null);
+  const previewRef = useRef<HTMLElement>(null);
 
   // ── Autosave (debounced) ───────────────────────────────────
   const dirty = useRef(false);
@@ -94,6 +103,47 @@ export function Editor({
 
   const patch = <K extends keyof InviteContent>(key: K, value: InviteContent[K]) => setContent((c) => ({ ...c, [key]: value }));
 
+  // ── Placed library art ─────────────────────────────────────
+  const theme = getTheme(themeId);
+  const stickers = cz.stickers ?? theme.stickers ?? [];
+  const dark = luminance(cz.bg || theme.palette.bg) < 0.12;
+  const setStickers = (fn: (list: Sticker[]) => Sticker[]) => setCz((c) => ({ ...c, stickers: fn(c.stickers ?? getTheme(themeId).stickers ?? []) }));
+  const stickerOps = {
+    onChange: (s: Sticker) => setStickers((l) => l.map((x) => (x.id === s.id ? s : x))),
+    onDelete: (id: string) => {
+      setStickers((l) => l.filter((x) => x.id !== id));
+      setSelectedSticker(null);
+    },
+    onDuplicate: (id: string) => {
+      const copy = { ...stickers.find((x) => x.id === id)!, id: newStickerId() };
+      copy.x += 4;
+      copy.y += 4;
+      setStickers((l) => [...l, copy]);
+      setSelectedSticker(copy.id);
+    },
+  };
+  function addSticker(asset: string) {
+    const fl = getFloral(asset);
+    if (!fl) return;
+    const w = fl.kind === "frame" || fl.kind === "wreath" ? 44 : fl.kind === "border" || fl.kind === "garland" ? 56 : fl.kind === "corner" ? 30 : 22;
+    // Drop it in the middle of whatever part of the page is on screen.
+    let anchor = "top";
+    let y = 50;
+    const inv = previewRef.current?.querySelector<HTMLElement>(".inv");
+    const pane = previewRef.current;
+    if (inv && pane) {
+      const pr = pane.getBoundingClientRect();
+      const mid = pr.top + Math.min(pr.height, window.innerHeight - pr.top) / 2 - inv.getBoundingClientRect().top;
+      const [id, box] = anchorAt(measure(inv), mid);
+      anchor = id;
+      y = ((mid - box.top) / box.height) * 100;
+    }
+    const s: Sticker = { id: newStickerId(), asset, anchor, x: 50, y, w, r: 0, anim: "fade" };
+    setStickers((l) => [...l, s]);
+    setSelectedSticker(s.id);
+    if (showPreviewMobile === false && window.innerWidth < 1024) setNotice("Added. Open the preview to move it.");
+  }
+
   async function togglePublish() {
     const data = await persist({ published: !published, themeId, content, customization: cz });
     if (data) {
@@ -131,6 +181,9 @@ export function Editor({
           <button className="btn btn-light !px-4 !py-2 lg:hidden" onClick={() => setShowPreviewMobile((v) => !v)}>
             {showPreviewMobile ? "Edit" : "Preview"}
           </button>
+          <Link href={`/dashboard/sites/${site.id}/card`} className="btn btn-light hidden !px-4 !py-2 md:inline-flex">
+            Invitation card
+          </Link>
           <a href={`/${slug}`} target="_blank" className="btn btn-light hidden !px-4 !py-2 sm:inline-flex">
             View
           </a>
@@ -143,12 +196,12 @@ export function Editor({
       <div className="flex min-h-0 flex-1">
         {/* Side panel */}
         <aside className={`${showPreviewMobile ? "hidden" : "flex"} w-full shrink-0 flex-col border-r border-line bg-white lg:flex lg:w-[420px]`}>
-          <nav className="flex shrink-0 border-b border-line text-sm">
-            {(["design", "content", "sections", "photos", "settings"] as Tab[]).map((t) => (
+          <nav className="flex shrink-0 overflow-x-auto border-b border-line text-sm [scrollbar-width:none]">
+            {(["design", "decor", "library", "effects", "content", "sections", "photos", "settings"] as Tab[]).map((t) => (
               <button
                 key={t}
                 onClick={() => setTab(t)}
-                className={`flex-1 border-b-2 py-3 capitalize ${tab === t ? "border-ink font-medium text-ink" : "border-transparent text-stone"}`}
+                className={`flex-none border-b-2 px-3 py-3 capitalize ${tab === t ? "border-ink font-medium text-ink" : "border-transparent text-stone"}`}
               >
                 {t}
               </button>
@@ -156,6 +209,38 @@ export function Editor({
           </nav>
           <div className="min-h-0 flex-1 overflow-y-auto p-5">
             {tab === "design" && <DesignPanel themeId={themeId} setThemeId={setThemeId} cz={cz} setCz={setCz} photos={photos} />}
+            {tab === "decor" && <DecorPanel themeId={themeId} cz={cz} setCz={setCz} />}
+            {tab === "library" && (
+              <LibraryPanel
+                stickers={stickers}
+                selected={selectedSticker}
+                dark={dark}
+                onAdd={addSticker}
+                onSelect={setSelectedSticker}
+                onReorder={(id, to) =>
+                  setStickers((l) => {
+                    const s = l.find((x) => x.id === id)!;
+                    const rest = l.filter((x) => x.id !== id);
+                    return to === "front" ? [...rest, s] : [s, ...rest];
+                  })
+                }
+                onClear={() => {
+                  setStickers(() => []);
+                  setSelectedSticker(null);
+                }}
+                {...stickerOps}
+              />
+            )}
+            {tab === "effects" && (
+              <EffectsPanel
+                cz={cz}
+                setCz={setCz}
+                themeEffects={theme.effects ?? {}}
+                ink={!!resolveDecorStyle(theme, (cz.template as never) || templateOf(theme), { decor: cz.decor, style: cz.style }).decor.ink}
+                intro={content.intro}
+                setIntro={(v) => patch("intro", v)}
+              />
+            )}
             {tab === "content" && <ContentPanel c={content} patch={patch} photos={photos} />}
             {tab === "sections" && <SectionsPanel c={content} setContent={setContent} />}
             {tab === "photos" && (
@@ -189,8 +274,14 @@ export function Editor({
         </aside>
 
         {/* Preview */}
-        <section className={`${showPreviewMobile ? "block" : "hidden"} min-w-0 flex-1 overflow-y-auto lg:block`}>
-          <div className={`mx-auto my-6 overflow-hidden bg-white shadow-xl transition-all ${device === "mobile" ? "w-[390px] rounded-[2rem] border-[10px] border-ink" : "w-[calc(100%-3rem)] max-w-[1280px] rounded-xl"}`}>
+        <section
+          ref={previewRef}
+          onPointerDown={(e) => {
+            if (selectedSticker && !(e.target as HTMLElement).closest(".stk")) setSelectedSticker(null);
+          }}
+          className={`${showPreviewMobile ? "block" : "hidden"} min-w-0 flex-1 overflow-y-auto lg:block`}
+        >
+          <div className={`mx-auto my-6 overflow-clip bg-white shadow-xl transition-all ${device === "mobile" ? "w-[390px] rounded-[2rem] border-[10px] border-ink" : "w-[calc(100%-3rem)] max-w-[1280px] rounded-xl"}`}>
             <InviteSite
               themeId={themeId}
               content={content}
@@ -198,6 +289,14 @@ export function Editor({
               photos={photos.map((p) => p.url)}
               wishes={initialWishes.length ? initialWishes : SAMPLE_WISHES}
               mode="preview"
+              stickerEditing={{
+                selected: selectedSticker,
+                onSelect: (id) => {
+                  setSelectedSticker(id);
+                  if (id) setTab("library");
+                },
+                ...stickerOps,
+              }}
             />
           </div>
         </section>

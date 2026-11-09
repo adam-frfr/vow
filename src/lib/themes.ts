@@ -8,6 +8,8 @@
  */
 
 import { CREDITS, MORE_THEMES } from "./themes-more";
+import { MOTION_THEMES } from "./themes-motion";
+import { LIBRARY_THEMES } from "./themes-library";
 
 /** Image treatment hint (used for thumbnails and some templates). */
 export type HeroLayout = "fullbleed" | "split" | "arch" | "botanical" | "polaroid" | "poster" | "card" | "cover" | "storybook";
@@ -31,7 +33,10 @@ export type TemplateId =
   | "voyage"
   | "gazette"
   | "swiss"
-  | "letter";
+  | "letter"
+  | "atelier"
+  | "candlelit"
+  | "bloom";
 
 export const TEMPLATES: { id: TemplateId; name: string; blurb: string }[] = [
   { id: "classic", name: "Classic Formal", blurb: "Traditional invitation wording, arched portrait, mirrored timeline." },
@@ -49,6 +54,9 @@ export const TEMPLATES: { id: TemplateId; name: string; blurb: string }[] = [
   { id: "split", name: "Split Screen", blurb: "A fixed photograph on one side, the story scrolling on the other." },
   { id: "botanical", name: "Botanical Heirloom", blurb: "Antique plates as specimen figures beside each section." },
   { id: "letter", name: "Love Letter", blurb: "A handwritten letter to your guests, with postscripts." },
+  { id: "atelier", name: "Watercolour Atelier", blurb: "Painted florals that bloom onto paper as guests scroll, framed like a stationery suite." },
+  { id: "candlelit", name: "Candlelit", blurb: "A real candle lights up as guests scroll; a dark, glowing evening invitation." },
+  { id: "bloom", name: "Garden Bloom", blurb: "A real flower opens beside your story as guests scroll through the day." },
 ];
 
 export type CollectionId =
@@ -64,7 +72,9 @@ export type CollectionId =
   | "cultural"
   | "bold"
   | "vintage"
-  | "seasonal";
+  | "seasonal"
+  | "watercolour"
+  | "animated";
 
 export interface Palette {
   bg: string; // page background
@@ -99,9 +109,18 @@ export interface Theme {
   template?: TemplateId;
   /** For artwork-based themes: shown on museum labels and credits. */
   credit?: { title: string; artist: string; year: string };
+  /** Hand-picked decor/style; anything unset falls back to palette-matched defaults. */
+  decor?: import("./decor").Decor;
+  style?: import("./decor").StyleAxes;
+  /** Library art placed by the theme (the couple can move or remove it). */
+  stickers?: import("./stickers").Sticker[];
+  /** Effects the theme turns on by default. */
+  effects?: import("./stickers").Effects;
 }
 
 export const COLLECTIONS: { id: CollectionId; name: string; blurb: string }[] = [
+  { id: "animated", name: "Scroll Animated", blurb: "Real footage that moves as guests scroll: a candle lights, a flower opens." },
+  { id: "watercolour", name: "Watercolour", blurb: "Hand-painted florals that bloom onto paper like wet ink." },
   { id: "timeless", name: "Timeless Elegance", blurb: "Black tie, ivory and gold. Polished and formal." },
   { id: "garden", name: "Romantic Garden", blurb: "Peonies, roses and meadow blooms." },
   { id: "cute", name: "Sweet & Playful", blurb: "Soft pastels, snapshots and a little whimsy." },
@@ -131,13 +150,14 @@ const REDOUTE = {
 };
 
 /** Sample couple photos used in demos and as placeholders before upload. */
+/** Placeholder gallery for demos: wedding details only, no strangers' faces. */
 export const SAMPLE_GALLERY = [
-  U("photo-1519741497674-611481863552"),
-  U("photo-1532712938310-34cb3982ef74"),
-  U("photo-1606216794079-73f85bbd57d5"),
-  U("photo-1591604466107-ec97de577aff"),
-  U("photo-1779475501433-69a3a0b310f8"),
-  U("photo-1606216794074-735e91aa2c92"),
+  U("photo-1764380746366-f4d8cc52e1e3"),
+  U("photo-1590683673322-0f3fabd72169"),
+  U("photo-1609357871650-96ae6d79503b"),
+  U("photo-1580657274234-7339717f4541"),
+  U("photo-1780337092739-af81fdabf5ca"),
+  U("photo-1608153917100-3bd2426fde7c"),
 ];
 
 const BASE_THEMES: Theme[] = [
@@ -553,32 +573,54 @@ const TEMPLATE_ASSIGNMENTS: Record<TemplateId, string[]> = {
   split: ["secret-garden", "tulip-garden", "golden-field", "autumn", "tropical", "hanbok", "olive-grove", "parasol"],
   botanical: ["redoute", "botanical-garden"],
   letter: ["english-rose", "candlelight", "tea-party", "daisy-days"],
+  atelier: [],
+  candlelit: [],
+  bloom: [],
 };
 
 const ASSIGNED = new Map<string, TemplateId>();
 for (const [tpl, ids] of Object.entries(TEMPLATE_ASSIGNMENTS) as [TemplateId, string[]][]) ids.forEach((id) => ASSIGNED.set(id, tpl));
+
+export const TEMPLATE_IDS = TEMPLATES.map((t) => t.id);
 
 const FALLBACK_TEMPLATE: Record<HeroLayout, TemplateId> = {
   fullbleed: "grand", split: "split", arch: "classic", botanical: "botanical", polaroid: "scrapbook",
   poster: "gallery", card: "stationery", cover: "editorial", storybook: "storybook",
 };
 
-export const THEMES: Theme[] = [...BASE_THEMES, ...MORE_THEMES].map((t) => ({
+/**
+ * Early themes that did not feel like wedding invitations (animals, strangers'
+ * portraits, plain nature photos). Hidden from every list, but still resolvable
+ * so sites already using one keep rendering.
+ */
+const RETIRED = new Set([
+  "grand-estate", "golden-field", "vineyard", "editorial-mono", "beach-sunset", "hanbok", "golden-union", "arabian-nights",
+  "city-hall", "noir", "groovy", "boating-party", "lady-shalott", "parasol", "puppy-love", "bunny", "silly-goose",
+  "cat-people", "peter-rabbit", "audubon", "medusae", "crow-blossom", "safari", "strawberry", "coffee", "sprinkles",
+  "balloons", "picnic", "tea-party", "macaron", "anemone", "sunflower", "tulip-garden", "lavender", "autumn", "wildflower",
+  "tropical", "olive-grove", "bali", "alpine-lake", "lighthouse", "maldives", "mountain-night", "seaside-cottage",
+  "paradise-hills", "ocean-deep", "fireflies", "aurora", "bookworms", "gothic", "london", "tokyo", "gatsby",
+  "floating-hearts", "forever-young", "sunset-hill", "concrete",
+]);
+
+const ALL_THEMES: Theme[] = [...MOTION_THEMES, ...BASE_THEMES, ...MORE_THEMES, ...LIBRARY_THEMES].map((t) => ({
   ...t,
   template: t.template ?? ASSIGNED.get(t.id) ?? FALLBACK_TEMPLATE[t.layout],
   credit: t.credit ?? CREDITS[t.id],
 }));
+
+export const THEMES: Theme[] = ALL_THEMES.filter((t) => !RETIRED.has(t.id));
 
 export function templateOf(theme: Theme): TemplateId {
   return theme.template ?? FALLBACK_TEMPLATE[theme.layout];
 }
 
 export function getTheme(id: string): Theme {
-  return THEMES.find((t) => t.id === id) ?? THEMES[0];
+  return ALL_THEMES.find((t) => t.id === id) ?? THEMES[0];
 }
 
 export function isThemeId(id: string) {
-  return THEMES.some((t) => t.id === id);
+  return ALL_THEMES.some((t) => t.id === id);
 }
 
 /** Unsplash images are served through imgix; size them for the slot. */

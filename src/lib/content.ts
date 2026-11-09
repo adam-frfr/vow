@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { cardSchema, effectsSchema, stickerSchema } from "./stickers";
+import { decorSchema, styleSchema } from "./decor";
 
 const str = (max: number) => z.string().max(max).default("");
 
@@ -83,6 +85,15 @@ export const customizationSchema = z.object({
   scriptFont: z.string().max(60).optional(),
   // An uploaded photo (served from our own storage) that replaces the theme hero.
   coverUrl: z.string().max(200).regex(/^\/api\/uploads\/[\w-]+\/[\w-]+\.(jpg|png|webp)$/).optional(),
+  /** Use a different site design with this theme's look. */
+  template: z.string().max(40).optional(),
+  decor: decorSchema.optional(),
+  style: styleSchema.optional(),
+  /** Library art the couple placed themselves. */
+  stickers: z.array(stickerSchema).max(60).optional(),
+  effects: effectsSchema.optional(),
+  /** The matching printed invitation. */
+  card: cardSchema.optional(),
 });
 export type Customization = z.infer<typeof customizationSchema>;
 

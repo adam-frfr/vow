@@ -76,7 +76,7 @@ export function Split({ ctx }: { ctx: Ctx }) {
               </>
             ),
             gallery: () => (
-              <div className="sp-gallery">
+              <div className="sp-gallery gal-tpl">
                 {ctx.gallery.map((src, i) => (
                   <GalleryImg key={i} src={src} w={700} />
                 ))}

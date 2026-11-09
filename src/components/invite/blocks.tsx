@@ -3,7 +3,8 @@
  * Building blocks shared by templates. Each renders semantic markup with
  * `blk-*` class names; every template styles them its own way.
  */
-import type { ReactNode } from "react";
+import { Fragment, type ReactNode } from "react";
+import { DecorCutout, DecorDivider, DecorPattern } from "./Decor";
 import { formatDate, musicEmbed, sectionTitle, UPLOAD_URL, type SectionId } from "@/lib/content";
 import { img } from "@/lib/themes";
 import { events, mapsLink, safeUrl, type Ctx } from "./ctx";
@@ -235,22 +236,57 @@ export function Sections({
   ctx,
   wrap,
   custom = {},
+  decor = true,
+  cutout = true,
+  dividers = true,
 }: {
   ctx: Ctx;
   wrap: (id: SectionId, index: number, content: ReactNode) => ReactNode;
   custom?: Partial<Record<SectionId, (index: number) => ReactNode>>;
+  /** Templates that place florals themselves pass false. */
+  decor?: boolean;
+  /** Templates that place the scroll cut-out themselves pass false. */
+  cutout?: boolean;
+  /** Templates with their own floral crowns pass false. */
+  dividers?: boolean;
 }) {
+  const n = ctx.sections.length;
+  const at = ctx.decor.cutoutAt ?? "intro";
+  const cutoutBefore = !cutout ? -1 : at === "intro" ? 0 : Math.max(0, ctx.sections.indexOf(at === "story" ? "story" : "rsvp"));
+  const patternAfter = decor && ctx.decor.pattern ? Math.min(2, n - 2) : -1;
+  const galleryStyle = ctx.style.gallery && ctx.style.gallery !== "design" ? ctx.style.gallery : null;
   return (
     <>
-      {ctx.sections.map((id, i) => (
-        <SectionSlot key={id}>{wrap(id, i, custom[id] ? custom[id]!(i) : <DefaultBlock id={id} ctx={ctx} />)}</SectionSlot>
-      ))}
+      {ctx.sections.map((id, i) => {
+        const content =
+          id === "gallery" && galleryStyle ? (
+            <StyledGallery ctx={ctx} kind={galleryStyle} />
+          ) : custom[id] ? (
+            custom[id]!(i)
+          ) : (
+            <DefaultBlock id={id} ctx={ctx} />
+          );
+        return (
+          <Fragment key={id}>
+            {i === cutoutBefore && <DecorCutout ctx={ctx} />}
+            {wrap(id, i, content)}
+            {decor && i === patternAfter && <DecorPattern ctx={ctx} />}
+            {decor && dividers && ctx.decor.divider && i % 2 === 1 && i < n - 1 && i !== patternAfter && <DecorDivider ctx={ctx} index={i} />}
+          </Fragment>
+        );
+      })}
     </>
   );
 }
 
-function SectionSlot({ children }: { children: ReactNode }) {
-  return <>{children}</>;
+export function StyledGallery({ ctx, kind }: { ctx: Ctx; kind: "grid" | "masonry" | "polaroid" | "filmstrip" | "mosaic" }) {
+  return (
+    <div className={`gal gal-${kind}`}>
+      {ctx.gallery.map((src, i) => (
+        <img key={i} src={img(src, kind === "mosaic" && i % 6 === 0 ? 1400 : 800)} alt="" loading="lazy" />
+      ))}
+    </div>
+  );
 }
 
 export function GalleryImg({ src, w = 900, className = "", eager = false }: { src: string; w?: number; className?: string; eager?: boolean }) {

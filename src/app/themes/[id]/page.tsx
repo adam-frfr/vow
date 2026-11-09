@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { CardBack, CardFront } from "@/components/card/InvitationCard";
 import { InviteSite } from "@/components/invite/InviteSite";
+import { resolveCard } from "@/lib/card";
 import { SAMPLE_WISHES, sampleContent } from "@/lib/content";
 import { COLLECTIONS, isThemeId, getTheme, TEMPLATES, templateOf, THEMES } from "@/lib/themes";
 
@@ -51,6 +53,31 @@ export default async function ThemeDemo({ params }: { params: Promise<{ id: stri
         </div>
       </div>
       <InviteSite themeId={theme.id} content={sampleContent()} wishes={SAMPLE_WISHES} mode="demo" />
+      <MatchingCard themeId={theme.id} />
     </>
+  );
+}
+
+/** The printed invitation that comes with this theme. */
+function MatchingCard({ themeId }: { themeId: string }) {
+  const theme = getTheme(themeId);
+  const r = resolveCard(theme, sampleContent());
+  return (
+    <section className="border-t border-line bg-[#efebe4] px-5 py-16">
+      <div className="mx-auto max-w-5xl">
+        <div className="mb-10 text-center">
+          <p className="text-[0.7rem] uppercase tracking-[0.3em] text-brand">Included with this theme</p>
+          <h2 className="mt-2 font-serif text-4xl">The matching invitation</h2>
+          <p className="mx-auto mt-2 max-w-xl text-stone">
+            A printable 5×7&quot; card in the same art, colours and type, with a QR code to your site on the back. Change the layout, colour and wording
+            in your dashboard.
+          </p>
+        </div>
+        <div className="mx-auto grid max-w-3xl gap-8 sm:grid-cols-2">
+          <CardFront r={r} />
+          <CardBack r={r} url="https://vow.app/olivia-and-james" />
+        </div>
+      </div>
+    </section>
   );
 }

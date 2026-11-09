@@ -1,5 +1,6 @@
 import { formatDate, musicEmbed, UPLOAD_URL, type InviteContent, type SectionId } from "@/lib/content";
-import type { Theme } from "@/lib/themes";
+import type { Decor, StyleAxes } from "@/lib/decor";
+import type { Theme, TemplateId } from "@/lib/themes";
 
 export type Mode = "live" | "preview" | "demo";
 export interface Wish {
@@ -28,6 +29,11 @@ export interface Ctx {
   p1: string;
   p2: string;
   date: string; // "Saturday, June 12, 2027" or ""
+  template: TemplateId;
+  decor: Decor;
+  style: StyleAxes;
+  /** Page background is dark (glow cut-outs allowed, pale florals not). */
+  dark: boolean;
 }
 
 export function events(c: InviteContent) {
@@ -72,6 +78,10 @@ export function buildCtx(args: {
   photos: string[];
   sampleGallery: string[];
   wishes: Wish[];
+  template: TemplateId;
+  decor: Decor;
+  style: StyleAxes;
+  dark: boolean;
 }): Ctx {
   const { theme, c, mode } = args;
   const gallery = args.photos.length ? args.photos : mode === "live" ? [] : args.sampleGallery;
@@ -91,6 +101,10 @@ export function buildCtx(args: {
     p1: c.partner1 || "Partner One",
     p2: c.partner2 || "Partner Two",
     date: formatDate(c.date),
+    template: args.template,
+    decor: args.decor,
+    style: args.style,
+    dark: args.dark,
   };
 }
 

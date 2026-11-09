@@ -1,119 +1,169 @@
 /* eslint-disable @next/next/no-img-element */
 import Link from "next/link";
+import "@/components/invite/invite.css";
+import "./landing.css";
 import { SiteHeader } from "@/components/ui/SiteHeader";
 import { ThemeCard } from "@/components/ui/ThemeCard";
-import { COLLECTIONS, getTheme, googleFontsHref, img, THEMES } from "@/lib/themes";
+import { CUTOUTS, FLORALS, floralUrl } from "@/lib/assets";
+import { COLLECTIONS, getTheme, googleFontsHref, TEMPLATES, templateOf, THEMES } from "@/lib/themes";
+import { BloomAside, CandleDemo, HeroFlorals } from "./LandingMotion";
 
-const FEATURED = ["ivory-gold", "black-tie", "cherry-blossom", "redoute", "santorini", "pampas", "midnight", "blush-peony"];
+const FAN = ["atelier-peony", "candlelit-noir", "great-wave"];
+
+const FEATURES: [string, string][] = [
+  ["Scroll-animated themes", "Real footage that moves as guests scroll: a candle lights, a flower opens, a match strikes."],
+  ["Painted florals", "Hand-painted watercolour florals that bloom onto the page like wet ink. Pick your own."],
+  ["18 site designs", "A newspaper, a museum, a boarding pass, a film premiere, a love letter… switch any time."],
+  ["Every word is yours", "Story, schedule, wedding party, travel, registry, FAQ: reorder, rename or hide any section."],
+  ["RSVPs & meal choices", "Guests reply in seconds; you see headcount, meals and notes, and export to a spreadsheet."],
+  ["Guestbook", "Friends leave notes on your site. You can hide any of them."],
+  ["Private when you want", "Password-protect your site. Drafts stay hidden until you publish."],
+  ["Share it anywhere", "A QR code for printed invitations, add-to-calendar, maps and one-tap sharing."],
+];
 
 export default function Home() {
-  const featured = FEATURED.map(getTheme);
+  const fan = FAN.map(getTheme);
+  const showcase = TEMPLATES.map((tpl) => ({ tpl, theme: THEMES.find((t) => templateOf(t) === tpl.id)! })).filter((x) => x.theme);
+  const fonts = [...new Set(THEMES.slice(0, 40).map((t) => t.fonts.script || t.fonts.display))];
   return (
     <>
-      <link rel="stylesheet" href={googleFontsHref(featured.map((t) => t.fonts.script || t.fonts.display))} precedence="default" />
-      <SiteHeader overlay />
+      <link rel="stylesheet" href={googleFontsHref([...fonts, ...showcase.map((s) => s.theme.fonts.script || s.theme.fonts.display)])} precedence="default" />
+      <SiteHeader />
 
-      {/* Hero */}
-      <section className="relative flex min-h-[100svh] items-center justify-center overflow-hidden text-center text-white">
-        <img
-          src={img("https://images.unsplash.com/photo-1519741497674-611481863552", 2400)}
-          alt=""
-          className="absolute inset-0 h-full w-full object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/30 to-black/60" />
-        <div className="relative max-w-3xl px-6">
-          <p className="text-xs uppercase tracking-[0.4em] text-white/80">Wedding websites</p>
-          <h1 className="mt-6 font-serif text-5xl leading-[1.05] sm:text-7xl">
-            Your love story,
+      <section className="lp-hero">
+        <HeroFlorals />
+        <div className="lp-hero-copy">
+          <p className="lp-k">Wedding websites</p>
+          <h1>
+            A wedding website
             <br />
-            <em className="font-normal">beautifully told.</em>
+            <em>that feels like a keepsake.</em>
           </h1>
-          <p className="mx-auto mt-6 max-w-xl text-base text-white/85 sm:text-lg">
-            Choose from {THEMES.length} designer themes, make every word your own, and collect RSVPs in one elegant link.
+          <p className="lp-sub">
+            {THEMES.length} themes on {TEMPLATES.length} completely different designs, with painted florals that bloom in and real footage that moves as
+            your guests scroll.
           </p>
-          <div className="mt-10 flex flex-wrap justify-center gap-3">
-            <Link href="/signup" className="btn bg-white !text-ink hover:!bg-ivory">
+          <div className="lp-cta">
+            <Link href="/signup" className="btn">
               Create your site, free
             </Link>
-            <Link href="/themes" className="btn border border-white/60 !bg-transparent hover:!bg-white/10">
-              Browse themes
+            <Link href="/themes" className="btn btn-light">
+              Browse {THEMES.length} themes
             </Link>
           </div>
         </div>
-      </section>
-
-      {/* Featured themes */}
-      <section className="mx-auto max-w-7xl px-5 py-24">
-        <div className="text-center">
-          <p className="eyebrow">The collection</p>
-          <h2 className="mt-3 font-serif text-4xl sm:text-5xl">Designed to feel like you</h2>
-          <p className="mx-auto mt-4 max-w-xl text-stone">
-            From black-tie glamour to sweet and playful, every theme is built around real photography and heirloom artwork.
-          </p>
-        </div>
-        <div className="mt-14 grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">
-          {featured.map((t) => (
-            <ThemeCard key={t.id} theme={t} href={`/themes/${t.id}`} />
+        <div className="lp-fan">
+          {fan.map((t, i) => (
+            <Link key={t.id} href={`/themes/${t.id}`} className={`lp-fan-card lp-fan-card--${i}`}>
+              <ThemeCard theme={t} />
+            </Link>
           ))}
         </div>
-        <div className="mt-12 text-center">
-          <Link href="/themes" className="btn btn-light">
-            See all {THEMES.length} themes
+      </section>
+
+      <section className="lp-stats">
+        {[
+          [THEMES.length, "themes"],
+          [TEMPLATES.length, "site designs"],
+          [CUTOUTS.length, "scroll animations"],
+          [FLORALS.length, "painted florals"],
+        ].map(([n, l]) => (
+          <div key={l}>
+            <b>{n}</b>
+            <span>{l}</span>
+          </div>
+        ))}
+      </section>
+
+      <CandleDemo />
+
+      <section className="lp-designs">
+        <div className="lp-head">
+          <p className="lp-k">Not colour swaps. Different architectures.</p>
+          <h2>{TEMPLATES.length} designs, each built differently</h2>
+          <p>Every design has its own layout, navigation and way of telling your story. Pick a theme, then switch designs any time.</p>
+        </div>
+        <div className="lp-design-grid">
+          {showcase.map(({ tpl, theme }) => (
+            <Link key={tpl.id} href={`/themes/${theme.id}`} className="lp-design">
+              <ThemeCard theme={theme} />
+              <div className="lp-design-meta">
+                <b>{tpl.name}</b>
+                <span>{tpl.blurb}</span>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      <section className="lp-florals">
+        <div className="lp-head">
+          <p className="lp-k">The florals</p>
+          <h2>Painted, not drawn by code</h2>
+          <p>A library of hand-painted watercolour florals, wreaths, corners, garlands and chintz. Choose them for any theme.</p>
+        </div>
+        <div className="lp-floral-strip">
+          {FLORALS.filter((f) => f.kind !== "pattern" && f.tone === "any")
+            .slice(0, 14)
+            .map((f) => (
+              <img key={f.id} src={floralUrl(f.id)} alt={f.name} loading="lazy" />
+            ))}
+        </div>
+      </section>
+
+      <section className="lp-features">
+        <BloomAside />
+        <div>
+          <p className="lp-k">Everything a wedding needs</p>
+          <h2>Thoughtful, all the way to the RSVP</h2>
+          <ul>
+            {FEATURES.map(([t, d]) => (
+              <li key={t}>
+                <b>{t}</b>
+                <span>{d}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      <section className="lp-collections">
+        {COLLECTIONS.map((c) => (
+          <Link key={c.id} href={`/themes?c=${c.id}`}>
+            <b>{c.name}</b>
+            <span>{c.blurb}</span>
+            <em>{THEMES.filter((t) => t.collection === c.id).length} themes →</em>
           </Link>
-        </div>
+        ))}
       </section>
 
-      {/* Collections strip */}
-      <section className="border-y border-line bg-cream/60 py-20">
-        <div className="mx-auto grid max-w-7xl gap-x-10 gap-y-8 px-5 sm:grid-cols-2 lg:grid-cols-4">
-          {COLLECTIONS.map((c) => (
-            <Link key={c.id} href={`/themes?c=${c.id}`} className="group">
-              <div className="font-serif text-2xl group-hover:text-brand">{c.name}</div>
-              <p className="mt-1 text-sm text-stone">{c.blurb}</p>
-              <p className="mt-2 text-xs uppercase tracking-[0.2em] text-brand">
-                {THEMES.filter((t) => t.collection === c.id).length} themes →
-              </p>
-            </Link>
+      <section className="lp-steps">
+        <p className="lp-k">How it works</p>
+        <h2>Ready before the coffee cools</h2>
+        <ol>
+          {[
+            ["Pick a theme", "Browse the collection and choose the look that feels like your day."],
+            ["Make it yours", "Edit every word, add photos, choose florals and animations, with a live preview."],
+            ["Share & collect RSVPs", "Publish to your own link and print the QR code on your invitations."],
+          ].map(([t, d], i) => (
+            <li key={t}>
+              <span>0{i + 1}</span>
+              <b>{t}</b>
+              <p>{d}</p>
+            </li>
           ))}
-        </div>
+        </ol>
+        <Link href="/signup" className="btn">
+          Start designing
+        </Link>
       </section>
 
-      {/* How it works */}
-      <section className="mx-auto max-w-6xl px-5 py-24">
-        <div className="grid items-center gap-14 lg:grid-cols-2">
-          <img
-            src={img("https://images.unsplash.com/photo-1764380746366-f4d8cc52e1e3", 1200)}
-            alt=""
-            className="aspect-[4/5] w-full rounded-[200px_200px_16px_16px] object-cover"
-          />
-          <div>
-            <p className="eyebrow">How it works</p>
-            <h2 className="mt-3 font-serif text-4xl sm:text-5xl">Ready before the coffee cools</h2>
-            <ol className="mt-10 space-y-8">
-              {[
-                ["Pick a theme", "Browse the collection and choose the look that feels like your day."],
-                ["Make it yours", "Edit every word, reorder sections, upload your photos and fine-tune colours and fonts with a live preview."],
-                ["Share & collect RSVPs", "Publish to your own link. Guests RSVP in seconds; you see every reply, meal choice and note in one place."],
-              ].map(([t, d], i) => (
-                <li key={t} className="flex gap-5">
-                  <span className="font-serif text-3xl text-brand">0{i + 1}</span>
-                  <div>
-                    <div className="font-serif text-2xl">{t}</div>
-                    <p className="mt-1 text-stone">{d}</p>
-                  </div>
-                </li>
-              ))}
-            </ol>
-            <Link href="/signup" className="btn mt-10">
-              Start designing
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      <footer className="border-t border-line py-10 text-center text-xs text-stone">
-        <div className="font-serif text-xl text-ink">Vow</div>
-        <p className="mt-2">Photography via Unsplash · Botanical plates by P.-J. Redouté (public domain)</p>
+      <footer className="lp-foot">
+        <div className="font-serif text-2xl text-ink">Vow</div>
+        <p>
+          Photography via Unsplash · Footage via Pexels · Painted florals via Pixabay · Masterpieces in the public domain (Hokusai, Klimt, Van Gogh, Monet,
+          Mucha, Redouté and more)
+        </p>
       </footer>
     </>
   );
