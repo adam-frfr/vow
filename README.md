@@ -1,36 +1,45 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Vow: wedding invitation websites
 
-## Getting Started
+Couples pick a designer theme, write their own words, upload photos, publish to
+their own link (`/sara-and-adam`) and collect RSVPs.
 
-First, run the development server:
+## Features
+- **32 themes in 8 collections**: Timeless Elegance, Romantic Garden, Sweet & Playful,
+  Rustic & Boho, Modern Minimal, Destination, Vintage & Royal, Seasonal.
+  Five hero layouts (full-bleed photo, editorial split, arch portrait, antique
+  botanical plate, polaroid snapshots). All built on real imagery: no CSS-drawn decoration.
+- **Editor** with live desktop/mobile preview and autosave: switch themes, override
+  colours and fonts, edit every section, reorder/rename/hide sections, choose a cover photo.
+- **Photo uploads** (JPG/PNG/WebP, magic-byte checked, 10 MB, 40 per site).
+- **RSVP** with guest count, meal choice and notes; guest dashboard with totals and CSV export.
+- Accounts (bcrypt + signed JWT cookie), drafts private until published, rate limiting on auth/RSVP.
 
+## Run locally
 ```bash
+npm install
+cp .env.example .env   # then set AUTH_SECRET (command in the file)
+npx prisma migrate dev
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Where things live
+| What | File |
+|---|---|
+| Theme catalogue (add a theme here) | `src/lib/themes.ts` |
+| Editable content model + defaults | `src/lib/content.ts` |
+| The guest-facing site renderer | `src/components/invite/InviteSite.tsx`, `invite.css` |
+| Editor | `src/app/dashboard/sites/[id]/Editor.tsx` |
+| Upload storage driver | `src/lib/storage.ts` |
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Going to production
+1. **Database:** change `provider` in `prisma/schema.prisma` to `postgresql`, point
+   `DATABASE_URL` at Postgres (Supabase/Neon), run `npx prisma migrate deploy`.
+2. **Uploads:** `src/lib/storage.ts` writes to local disk. On Vercel/serverless, swap
+   its three functions for S3 / Cloudflare R2 / Supabase Storage.
+3. **Rate limiting** is in-memory (`src/lib/rate-limit.ts`). Use Upstash/Redis with multiple instances.
+4. Theme images are hot-linked from Unsplash (Unsplash License) and Wikimedia
+   Commons (public-domain Redouté plates). Consider self-hosting them before launch.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Credits
+Photography via [Unsplash](https://unsplash.com/license). Botanical plates by
+Pierre-Joseph Redouté, *Les Roses* (1817–1824), public domain.

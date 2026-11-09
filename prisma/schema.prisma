@@ -1,0 +1,65 @@
+// SQLite for local development. To go to production, switch provider to
+// "postgresql" and point DATABASE_URL at Postgres (Supabase, Neon, RDS...).
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String?
+  passwordHash String
+  createdAt    DateTime @default(now())
+  sites        Site[]
+}
+
+model Site {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  slug          String   @unique
+  themeId       String
+  /// JSON: InviteContent (see src/lib/content.ts)
+  content       String
+  /// JSON: Customization overrides (colors, fonts, cover photo)
+  customization String   @default("{}")
+  published     Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  photos        Photo[]
+  rsvps         Rsvp[]
+
+  @@index([userId])
+}
+
+model Photo {
+  id        String   @id @default(cuid())
+  siteId    String
+  site      Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  url       String
+  storageKey String
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([siteId])
+}
+
+model Rsvp {
+  id        String   @id @default(cuid())
+  siteId    String
+  site      Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  name      String
+  email     String?
+  attending Boolean
+  guests    Int      @default(1)
+  meal      String?
+  message   String?
+  createdAt DateTime @default(now())
+
+  @@index([siteId])
+}

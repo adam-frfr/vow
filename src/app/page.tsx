@@ -1,103 +1,120 @@
-import Image from "next/image";
+/* eslint-disable @next/next/no-img-element */
+import Link from "next/link";
+import { SiteHeader } from "@/components/ui/SiteHeader";
+import { ThemeCard } from "@/components/ui/ThemeCard";
+import { COLLECTIONS, getTheme, googleFontsHref, img, THEMES } from "@/lib/themes";
+
+const FEATURED = ["ivory-gold", "black-tie", "cherry-blossom", "redoute", "santorini", "pampas", "midnight", "blush-peony"];
 
 export default function Home() {
+  const featured = FEATURED.map(getTheme);
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <>
+      <link rel="stylesheet" href={googleFontsHref(featured.map((t) => t.fonts.script || t.fonts.display))} precedence="default" />
+      <SiteHeader overlay />
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+      {/* Hero */}
+      <section className="relative flex min-h-[100svh] items-center justify-center overflow-hidden text-center text-white">
+        <img
+          src={img("https://images.unsplash.com/photo-1519741497674-611481863552", 2400)}
+          alt=""
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/30 to-black/60" />
+        <div className="relative max-w-3xl px-6">
+          <p className="text-xs uppercase tracking-[0.4em] text-white/80">Wedding websites</p>
+          <h1 className="mt-6 font-serif text-5xl leading-[1.05] sm:text-7xl">
+            Your love story,
+            <br />
+            <em className="font-normal">beautifully told.</em>
+          </h1>
+          <p className="mx-auto mt-6 max-w-xl text-base text-white/85 sm:text-lg">
+            Choose from {THEMES.length} designer themes, make every word your own, and collect RSVPs in one elegant link.
+          </p>
+          <div className="mt-10 flex flex-wrap justify-center gap-3">
+            <Link href="/signup" className="btn bg-white !text-ink hover:!bg-ivory">
+              Create your site, free
+            </Link>
+            <Link href="/themes" className="btn border border-white/60 !bg-transparent hover:!bg-white/10">
+              Browse themes
+            </Link>
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
+      </section>
+
+      {/* Featured themes */}
+      <section className="mx-auto max-w-7xl px-5 py-24">
+        <div className="text-center">
+          <p className="eyebrow">The collection</p>
+          <h2 className="mt-3 font-serif text-4xl sm:text-5xl">Designed to feel like you</h2>
+          <p className="mx-auto mt-4 max-w-xl text-stone">
+            From black-tie glamour to sweet and playful, every theme is built around real photography and heirloom artwork.
+          </p>
+        </div>
+        <div className="mt-14 grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">
+          {featured.map((t) => (
+            <ThemeCard key={t.id} theme={t} href={`/themes/${t.id}`} />
+          ))}
+        </div>
+        <div className="mt-12 text-center">
+          <Link href="/themes" className="btn btn-light">
+            See all {THEMES.length} themes
+          </Link>
+        </div>
+      </section>
+
+      {/* Collections strip */}
+      <section className="border-y border-line bg-cream/60 py-20">
+        <div className="mx-auto grid max-w-7xl gap-x-10 gap-y-8 px-5 sm:grid-cols-2 lg:grid-cols-4">
+          {COLLECTIONS.map((c) => (
+            <Link key={c.id} href={`/themes?c=${c.id}`} className="group">
+              <div className="font-serif text-2xl group-hover:text-brand">{c.name}</div>
+              <p className="mt-1 text-sm text-stone">{c.blurb}</p>
+              <p className="mt-2 text-xs uppercase tracking-[0.2em] text-brand">
+                {THEMES.filter((t) => t.collection === c.id).length} themes →
+              </p>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      {/* How it works */}
+      <section className="mx-auto max-w-6xl px-5 py-24">
+        <div className="grid items-center gap-14 lg:grid-cols-2">
+          <img
+            src={img("https://images.unsplash.com/photo-1764380746366-f4d8cc52e1e3", 1200)}
+            alt=""
+            className="aspect-[4/5] w-full rounded-[200px_200px_16px_16px] object-cover"
           />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
+          <div>
+            <p className="eyebrow">How it works</p>
+            <h2 className="mt-3 font-serif text-4xl sm:text-5xl">Ready before the coffee cools</h2>
+            <ol className="mt-10 space-y-8">
+              {[
+                ["Pick a theme", "Browse the collection and choose the look that feels like your day."],
+                ["Make it yours", "Edit every word, reorder sections, upload your photos and fine-tune colours and fonts with a live preview."],
+                ["Share & collect RSVPs", "Publish to your own link. Guests RSVP in seconds; you see every reply, meal choice and note in one place."],
+              ].map(([t, d], i) => (
+                <li key={t} className="flex gap-5">
+                  <span className="font-serif text-3xl text-brand">0{i + 1}</span>
+                  <div>
+                    <div className="font-serif text-2xl">{t}</div>
+                    <p className="mt-1 text-stone">{d}</p>
+                  </div>
+                </li>
+              ))}
+            </ol>
+            <Link href="/signup" className="btn mt-10">
+              Start designing
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      <footer className="border-t border-line py-10 text-center text-xs text-stone">
+        <div className="font-serif text-xl text-ink">Vow</div>
+        <p className="mt-2">Photography via Unsplash · Botanical plates by P.-J. Redouté (public domain)</p>
       </footer>
-    </div>
+    </>
   );
 }
