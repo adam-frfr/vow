@@ -5,8 +5,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { InviteSite } from "@/components/invite/InviteSite";
-import { SECTION_LABELS, type Customization, type InviteContent, type SectionId } from "@/lib/content";
-import { COLLECTIONS, FONT_CHOICES, getTheme, img, THEMES, type CollectionId } from "@/lib/themes";
+import { SAMPLE_WISHES, SECTION_LABELS, musicEmbed, type Customization, type InviteContent, type SectionId } from "@/lib/content";
+import { COLLECTIONS, FONT_CHOICES, getTheme, img, TEMPLATES, templateOf, THEMES, type CollectionId } from "@/lib/themes";
+import type { Wish } from "@/components/invite/ctx";
+import { ShareTools } from "./ShareTools";
 
 type Photo = { id: string; url: string };
 type Tab = "design" | "content" | "sections" | "photos" | "settings";
@@ -17,11 +19,13 @@ export function Editor({
   initialContent,
   initialCustomization,
   initialPhotos,
+  initialWishes,
 }: {
-  site: { id: string; slug: string; themeId: string; published: boolean };
+  site: { id: string; slug: string; themeId: string; published: boolean; isProtected: boolean };
   initialContent: InviteContent;
   initialCustomization: Customization;
   initialPhotos: Photo[];
+  initialWishes: Wish[];
 }) {
   const router = useRouter();
   const [tab, setTab] = useState<Tab>("design");
@@ -31,6 +35,7 @@ export function Editor({
   const [photos, setPhotos] = useState(initialPhotos);
   const [slug, setSlug] = useState(site.slug);
   const [published, setPublished] = useState(site.published);
+  const [isProtected, setIsProtected] = useState(site.isProtected);
   const [device, setDevice] = useState<"desktop" | "mobile">("desktop");
   const [save, setSave] = useState<SaveState>("saved");
   const [notice, setNotice] = useState("");
@@ -151,7 +156,7 @@ export function Editor({
           </nav>
           <div className="min-h-0 flex-1 overflow-y-auto p-5">
             {tab === "design" && <DesignPanel themeId={themeId} setThemeId={setThemeId} cz={cz} setCz={setCz} photos={photos} />}
-            {tab === "content" && <ContentPanel c={content} patch={patch} />}
+            {tab === "content" && <ContentPanel c={content} patch={patch} photos={photos} />}
             {tab === "sections" && <SectionsPanel c={content} setContent={setContent} />}
             {tab === "photos" && (
               <PhotosPanel siteId={site.id} photos={photos} setPhotos={setPhotos} cz={cz} setCz={setCz} onNotice={setNotice} />
@@ -160,12 +165,23 @@ export function Editor({
               <SettingsPanel
                 siteId={site.id}
                 slug={slug}
+                published={published}
+                isProtected={isProtected}
+                names={`${content.partner1} & ${content.partner2}`}
                 onSlug={async (s) => {
                   const d = await persist({ slug: s });
                   if (d) {
                     setSlug(d.slug);
                     setNotice("Link updated.");
                   }
+                }}
+                onPassword={async (pw) => {
+                  const d = await persist({ password: pw });
+                  if (d) {
+                    setIsProtected(d.protected);
+                    setNotice(d.protected ? "Password set. Guests will need it to view your site." : "Password removed.");
+                  }
+                  return !!d;
                 }}
               />
             )}
@@ -175,7 +191,14 @@ export function Editor({
         {/* Preview */}
         <section className={`${showPreviewMobile ? "block" : "hidden"} min-w-0 flex-1 overflow-y-auto lg:block`}>
           <div className={`mx-auto my-6 overflow-hidden bg-white shadow-xl transition-all ${device === "mobile" ? "w-[390px] rounded-[2rem] border-[10px] border-ink" : "w-[calc(100%-3rem)] max-w-[1280px] rounded-xl"}`}>
-            <InviteSite themeId={themeId} content={content} customization={cz} photos={photos.map((p) => p.url)} mode="preview" />
+            <InviteSite
+              themeId={themeId}
+              content={content}
+              customization={cz}
+              photos={photos.map((p) => p.url)}
+              wishes={initialWishes.length ? initialWishes : SAMPLE_WISHES}
+              mode="preview"
+            />
           </div>
         </section>
       </div>
@@ -297,7 +320,10 @@ function DesignPanel({
 
   return (
     <>
-      <Group title="Theme" hint="Switch any time. Your words and photos stay put.">
+      <Group
+        title="Theme"
+        hint={`Current design: ${TEMPLATES.find((x) => x.id === templateOf(theme))?.name}. ${TEMPLATES.find((x) => x.id === templateOf(theme))?.blurb} Switch any time; your words and photos stay put.`}
+      >
         <div className="flex gap-1.5 overflow-x-auto pb-1">
           {[{ id: "all" as const, name: "All" }, ...COLLECTIONS].map((c) => (
             <button
@@ -322,11 +348,14 @@ function DesignPanel({
                   src={img(t.hero, 240)}
                   alt=""
                   loading="lazy"
-                  className={`h-full w-full ${t.layout === "botanical" ? "object-contain p-2 mix-blend-multiply" : "object-cover"}`}
+                  className={`h-full w-full ${t.layout === "botanical" ? "object-contain p-2 mix-blend-multiply" : t.layout === "poster" ? "object-contain p-2" : "object-cover"}`}
                   style={t.heroFilter ? { filter: t.heroFilter } : undefined}
                 />
               </div>
-              <div className="truncate px-1.5 py-1 text-[0.7rem]">{t.name}</div>
+              <div className="px-1.5 py-1">
+                <div className="truncate text-[0.7rem]">{t.name}</div>
+                <div className="truncate text-[0.6rem] text-stone">{TEMPLATES.find((x) => x.id === templateOf(t))?.name}</div>
+              </div>
             </button>
           ))}
         </div>
@@ -373,7 +402,27 @@ function DesignPanel({
 
 /* ─── Content ──────────────────────────────────────────────── */
 
-function ContentPanel({ c, patch }: { c: InviteContent; patch: <K extends keyof InviteContent>(k: K, v: InviteContent[K]) => void }) {
+function Toggle({ checked, onChange, label, hint }: { checked: boolean; onChange: (v: boolean) => void; label: string; hint?: string }) {
+  return (
+    <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-line p-3">
+      <input type="checkbox" className="mt-1" checked={checked} onChange={(e) => onChange(e.target.checked)} />
+      <span>
+        <span className="block text-sm">{label}</span>
+        {hint && <span className="block text-xs text-stone">{hint}</span>}
+      </span>
+    </label>
+  );
+}
+
+function ContentPanel({
+  c,
+  patch,
+  photos,
+}: {
+  c: InviteContent;
+  patch: <K extends keyof InviteContent>(k: K, v: InviteContent[K]) => void;
+  photos: Photo[];
+}) {
   const ev = (which: "ceremony" | "reception", label: string) => {
     const e = c.details[which];
     const set = (k: keyof typeof e, v: string) => patch("details", { ...c.details, [which]: { ...e, [k]: v } });
@@ -404,6 +453,12 @@ function ContentPanel({ c, patch }: { c: InviteContent; patch: <K extends keyof 
         </div>
         <Text label="Headline" value={c.headline} onChange={(v) => patch("headline", v)} placeholder="Together with their families" max={120} />
         <Text label="Tagline" value={c.tagline} onChange={(v) => patch("tagline", v)} placeholder="invite you to celebrate their wedding" max={200} />
+        <Toggle
+          checked={c.intro}
+          onChange={(v) => patch("intro", v)}
+          label="“Open your invitation” intro screen"
+          hint="Guests see a sealed invitation card first and tap to open it."
+        />
       </Group>
 
       <Group title="Our story">
@@ -413,6 +468,78 @@ function ContentPanel({ c, patch }: { c: InviteContent; patch: <K extends keyof 
       <Group title="Ceremony & reception">
         {ev("ceremony", "Ceremony")}
         {ev("reception", "Reception")}
+        <Toggle
+          checked={c.details.showMap}
+          onChange={(v) => patch("details", { ...c.details, showMap: v })}
+          label="Show a map of the venue"
+          hint="Embeds a Google map of the first address."
+        />
+      </Group>
+
+      <Group title="Wedding party" hint="Bridesmaids, groomsmen, officiant, flower girl…">
+        {c.party.members.map((m, i) => {
+          const set = (k: "name" | "role" | "photo", v: string) =>
+            patch("party", { members: c.party.members.map((x, j) => (j === i ? { ...x, [k]: v } : x)) });
+          return (
+            <div key={i} className="rounded-xl border border-line p-3">
+              <div className="grid grid-cols-2 gap-2">
+                <Text label="Name" value={m.name} onChange={(v) => set("name", v)} max={80} />
+                <Text label="Role" value={m.role} onChange={(v) => set("role", v)} max={80} />
+              </div>
+              {photos.length > 0 && (
+                <div className="mt-2">
+                  <span className="label">Photo</span>
+                  <div className="flex gap-1.5 overflow-x-auto pb-1">
+                    <button
+                      type="button"
+                      onClick={() => set("photo", "")}
+                      className={`h-11 w-11 shrink-0 rounded-full border text-[0.6rem] ${!m.photo ? "border-ink ring-2 ring-ink" : "border-line"}`}
+                    >
+                      None
+                    </button>
+                    {photos.map((p) => (
+                      <button
+                        type="button"
+                        key={p.id}
+                        onClick={() => set("photo", p.url)}
+                        className={`h-11 w-11 shrink-0 overflow-hidden rounded-full border ${m.photo === p.url ? "border-ink ring-2 ring-ink" : "border-line"}`}
+                      >
+                        <img src={p.url} alt="" className="h-full w-full object-cover" />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <div className="mt-2 text-right">
+                <RemoveBtn onClick={() => patch("party", { members: c.party.members.filter((_, j) => j !== i) })} />
+              </div>
+            </div>
+          );
+        })}
+        {c.party.members.length < 24 && (
+          <button
+            className="btn btn-light w-full"
+            onClick={() => patch("party", { members: [...c.party.members, { name: "", role: "", photo: "" }] })}
+          >
+            + Add person
+          </button>
+        )}
+      </Group>
+
+      <Group title="Our song" hint="Paste a Spotify or YouTube link. Guests can play it right on your site.">
+        <Text
+          label="Spotify or YouTube link"
+          value={c.music.url}
+          onChange={(v) => patch("music", { ...c.music, url: v })}
+          placeholder="https://open.spotify.com/track/…"
+          max={300}
+        />
+        {c.music.url && !musicEmbed(c.music.url) && <p className="text-xs text-red-700">That link isn&rsquo;t a Spotify or YouTube song link.</p>}
+        <Text label="A note about it" value={c.music.note} onChange={(v) => patch("music", { ...c.music, note: v })} max={300} />
+      </Group>
+
+      <Group title="Guestbook" hint="Guests can leave you notes on your site. You can hide any of them from the Guests page.">
+        <Text label="Invitation to write" multiline value={c.wishes.body} onChange={(v) => patch("wishes", { body: v })} max={300} />
       </Group>
 
       <Group title="Schedule">
@@ -669,10 +796,28 @@ function PhotosPanel({
 
 /* ─── Settings ─────────────────────────────────────────────── */
 
-function SettingsPanel({ siteId, slug, onSlug }: { siteId: string; slug: string; onSlug: (s: string) => Promise<void> }) {
+function SettingsPanel({
+  siteId,
+  slug,
+  published,
+  isProtected,
+  names,
+  onSlug,
+  onPassword,
+}: {
+  siteId: string;
+  slug: string;
+  published: boolean;
+  isProtected: boolean;
+  names: string;
+  onSlug: (s: string) => Promise<void>;
+  onPassword: (pw: string | null) => Promise<boolean>;
+}) {
   const router = useRouter();
   const [value, setValue] = useState(slug);
-  const origin = typeof window !== "undefined" ? window.location.origin : "";
+  const [pw, setPw] = useState("");
+  const [origin, setOrigin] = useState("");
+  useEffect(() => setOrigin(window.location.origin), []);
 
   async function del() {
     if (!confirm("Permanently delete this site, its photos and all RSVPs? This can't be undone.")) return;
@@ -696,9 +841,43 @@ function SettingsPanel({ siteId, slug, onSlug }: { siteId: string; slug: string;
           </button>
         </div>
       </Group>
+      {origin && <ShareTools url={`${origin}/${slug}`} names={names} published={published} />}
+
+      <Group
+        title="Privacy"
+        hint={isProtected ? "Your site is password-protected. Guests must enter the password to see it." : "Anyone with your link can view your site."}
+      >
+        <div className="flex gap-2">
+          <input
+            className="field"
+            type="text"
+            value={pw}
+            minLength={4}
+            maxLength={100}
+            autoComplete="off"
+            placeholder={isProtected ? "New password" : "Set a guest password"}
+            onChange={(e) => setPw(e.target.value)}
+          />
+          <button
+            className="btn !px-4 !py-2"
+            disabled={pw.trim().length < 4}
+            onClick={async () => {
+              if (await onPassword(pw.trim())) setPw("");
+            }}
+          >
+            Save
+          </button>
+        </div>
+        {isProtected && (
+          <button className="text-sm text-stone underline" onClick={() => onPassword(null)}>
+            Remove password
+          </button>
+        )}
+      </Group>
+
       <Group title="Guests">
         <Link href={`/dashboard/sites/${siteId}/guests`} className="btn btn-light w-full">
-          View RSVPs
+          RSVPs &amp; guestbook
         </Link>
       </Group>
       <Group title="Danger zone">

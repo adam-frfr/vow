@@ -1,0 +1,39 @@
+/* LOVE LETTER: a handwritten note with postscripts */
+.t-lt { --paper: color-mix(in srgb, var(--bg) 55%, #fff); --hair: color-mix(in srgb, var(--text) 14%, transparent); font-size: 17px; }
+.lt-hero { display: grid; gap: 2.6rem; align-items: center; padding: clamp(2.6rem, 7cqi, 5rem) clamp(1.2rem, 5cqi, 3rem); max-width: 1180px; margin: 0 auto; min-height: var(--hero-h); }
+@container inv (min-width: 900px) { .lt-hero { grid-template-columns: .9fr 1.1fr; gap: 4.5rem; } }
+.lt-photo { margin: 0 auto; width: min(100%, 440px); background: #fff; padding: 14px 14px 60px; transform: rotate(-3deg); box-shadow: 0 30px 60px -32px rgba(0,0,0,.45), 0 2px 6px rgba(0,0,0,.08); }
+.lt-photo img { width: 100%; aspect-ratio: 4/5; object-fit: cover; }
+.lt-letter { background: var(--paper); padding: clamp(2rem, 6cqi, 3.6rem) clamp(1.4rem, 6cqi, 3.6rem); box-shadow: 0 30px 60px -36px rgba(0,0,0,.35); line-height: 1.85; position: relative; }
+.lt-letter p + p { margin-top: 1em; }
+.lt-dateline { text-align: right; font-style: italic; color: var(--muted); font-size: .92rem; }
+.lt-dear { font-size: clamp(2rem, 5cqi, 2.8rem); color: var(--accent); margin: 1.4rem 0 1.2rem !important; line-height: 1.1; }
+.lt-closing { margin-top: 1.8rem !important; font-style: italic; }
+.lt-sign { font-size: clamp(2.6rem, 7cqi, 3.8rem); color: var(--accent); line-height: 1.1; margin-top: .2rem !important; }
+.lt-count { margin-top: 1.8rem; padding-top: 1.4rem; border-top: 1px solid var(--hair); }
+
+.lt-ps { max-width: 780px; margin: 0 auto; padding: clamp(2.6rem, 6cqi, 4rem) clamp(1.2rem, 5cqi, 3rem); border-top: 1px dashed var(--hair); }
+.lt-ps-mark { font-size: 2rem; color: var(--accent); }
+.lt-ps h2 { font-size: clamp(1.8rem, 4.4cqi, 2.4rem); margin: .3rem 0 1.4rem; }
+.lt-ps-body { font-size: 1.06rem; line-height: 1.85; }
+.lt-line + .lt-line { margin-top: .9rem; }
+.lt-link { color: var(--accent) !important; text-decoration: underline; text-underline-offset: 3px; font-style: italic; }
+.lt-map { border-radius: 4px; }
+.lt-list { margin: 0; padding-left: 1.2rem; }
+.lt-list li { padding: .3rem 0; }
+.lt-list li::marker { color: var(--accent); }
+.lt-snaps { display: flex; flex-wrap: wrap; gap: 1.2rem; justify-content: center; }
+.lt-snap { margin: 0; width: min(44%, 220px); background: #fff; padding: 9px 9px 34px; box-shadow: 0 16px 30px -18px rgba(0,0,0,.4); }
+.lt-snap:nth-child(odd) { transform: rotate(-2.5deg); }
+.lt-snap:nth-child(even) { transform: rotate(2deg); }
+.lt-snap img { width: 100%; aspect-ratio: 1; object-fit: cover; }
+.lt-reply { background: var(--paper); padding: 2rem clamp(1.2rem, 5cqi, 2.6rem); box-shadow: 0 24px 50px -34px rgba(0,0,0,.35); }
+.lt-reply-title { font-size: 2.4rem; color: var(--accent); }
+.lt-reply .m { margin: .6rem 0 1.6rem !important; }
+.t-lt .blk-form, .t-lt .blk-wish-form { margin: 0; }
+.t-lt .blk-choice button { text-transform: none; letter-spacing: .01em; font-style: italic; font-size: 1rem; }
+.t-lt .blk-wish { background: var(--paper); box-shadow: 0 12px 24px -18px rgba(0,0,0,.35); }
+.t-lt .blk-wish p { font-style: italic; }
+.t-lt .blk-wishes-intro, .t-lt .blk-rsvp-body { text-align: left; margin-left: 0 !important; }
+.lt-foot { text-align: center; padding: 3rem 1rem 0; }
+.lt-foot .s { font-size: clamp(2.4rem, 7cqi, 3.4rem); color: var(--accent); }

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { getOwnedSite } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -12,6 +13,8 @@ const patchSchema = z.object({
   customization: customizationSchema.optional(),
   published: z.boolean().optional(),
   slug: z.string().max(48).optional(),
+  /** string sets a guest password, null removes it */
+  password: z.string().min(4, "Use at least 4 characters.").max(100).nullable().optional(),
 });
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -40,9 +43,16 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       customization: body.customization ? JSON.stringify(body.customization) : undefined,
       published: body.published,
       slug,
+      passwordHash: body.password === undefined ? undefined : body.password === null ? null : await bcrypt.hash(body.password, 10),
     },
   });
-  return NextResponse.json({ ok: true, slug: updated.slug, published: updated.published, updatedAt: updated.updatedAt });
+  return NextResponse.json({
+    ok: true,
+    slug: updated.slug,
+    published: updated.published,
+    protected: !!updated.passwordHash,
+    updatedAt: updated.updatedAt,
+  });
 }
 
 export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {

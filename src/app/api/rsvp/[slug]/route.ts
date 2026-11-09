@@ -3,6 +3,8 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { parseContent } from "@/lib/content";
 import { rateLimit } from "@/lib/rate-limit";
+import { getUserId } from "@/lib/auth";
+import { hasSiteAccess } from "@/lib/site-access";
 
 const schema = z.object({
   name: z.string().trim().min(1, "Please enter your name.").max(100),
@@ -11,7 +13,7 @@ const schema = z.object({
   guests: z.number().int().min(1).max(10).default(1),
   meal: z.string().max(60).optional(),
   message: z.string().max(1000).optional(),
-  website: z.string().max(0).optional(), // honeypot: must be empty
+  website: z.string().max(0, "Something went wrong. Please try again.").optional(), // honeypot: must be empty
 });
 
 export async function POST(req: Request, { params }: { params: Promise<{ slug: string }> }) {
@@ -21,6 +23,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ slug: s
   const { slug } = await params;
   const site = await db.site.findUnique({ where: { slug } });
   if (!site || !site.published) return NextResponse.json({ error: "This invitation isn't accepting RSVPs." }, { status: 404 });
+  if (!(await hasSiteAccess(site, await getUserId()))) return NextResponse.json({ error: "This site is private." }, { status: 403 });
 
   const parsed = schema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Please check your details." }, { status: 400 });

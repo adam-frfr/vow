@@ -1,0 +1,45 @@
+/* BOTANICAL HEIRLOOM: specimen plates beside sections */
+.t-bt { --hair: color-mix(in srgb, var(--text) 18%, transparent); background: radial-gradient(ellipse at 50% 0%, color-mix(in srgb, var(--bg) 70%, #fff) 0%, var(--bg) 60%); }
+.t-bt img { mix-blend-mode: multiply; }
+.bt-hero { text-align: center; padding: clamp(2.6rem, 7cqi, 4.5rem) clamp(1.2rem, 5cqi, 3rem) clamp(4rem, 9cqi, 6rem); }
+.bt-k { color: var(--muted); }
+.bt-plate { margin: 1.4rem auto 0; width: min(64cqi, 360px); }
+.bt-plate img { width: 100%; filter: saturate(.95) contrast(1.02); }
+.bt-plate figcaption, .bt-spec figcaption { font-style: italic; font-size: .82rem; color: var(--muted); margin-top: .4rem; }
+.bt-names { display: flex; flex-direction: column; align-items: center; line-height: 1; margin: 1.6rem 0 1rem; }
+.bt-names .d { font-size: clamp(3rem, 11cqi, 6.2rem); }
+.bt-names .s { font-size: clamp(2.4rem, 7cqi, 4rem); color: var(--accent); margin: .1em 0; }
+.bt-tag { font-style: italic; font-size: 1.1rem; }
+.bt-when { margin-top: 1rem !important; font-size: .78rem; letter-spacing: .26em; text-transform: uppercase; }
+.bt-count { justify-content: center; margin-top: 2rem; }
+
+.bt-sec { display: grid; gap: 2rem; padding: clamp(3.5rem, 8cqi, 5.5rem) clamp(1.2rem, 5cqi, 3rem); max-width: 1100px; margin: 0 auto; border-top: 1px solid var(--hair); align-items: start; }
+@container inv (min-width: 860px) {
+  .bt-sec { grid-template-columns: 300px 1fr; gap: 4rem; }
+  .bt-sec--flip { grid-template-columns: 1fr 300px; }
+  .bt-sec--flip .bt-spec { order: 2; }
+  .bt-sec--wide { grid-template-columns: 1fr; }
+  .bt-spec { position: sticky; top: calc(var(--sticky-top, 0px) + 2rem); }
+}
+.bt-spec { margin: 0; text-align: center; mix-blend-mode: multiply; }
+.bt-spec img { width: 100%; max-width: 300px; margin: 0 auto; }
+.bt-sec-no { font-size: .68rem; letter-spacing: .3em; text-transform: uppercase; color: var(--accent); }
+.bt-body h2 { font-size: clamp(2.2rem, 5.4cqi, 3.2rem); margin-top: .4rem; font-style: italic; }
+.bt-rule { width: 70px; height: 1px; background: var(--accent); margin: 1.2rem 0 1.8rem; }
+.bt-sec--wide .bt-body { text-align: center; }
+.bt-sec--wide .bt-rule { margin-left: auto; margin-right: auto; }
+.bt-body .blk-prose { font-size: 1.08rem; line-height: 1.85; }
+.bt-entry { padding: 1rem 0; border-bottom: 1px solid var(--hair); }
+.bt-entry-k { font-size: .66rem; letter-spacing: .26em; text-transform: uppercase; color: var(--accent); }
+.bt-entry-v { font-size: 1.6rem; margin: .2rem 0; }
+.bt-link { display: inline-block; margin: .6rem 1.4rem 0 0; font-size: .72rem; letter-spacing: .2em; text-transform: uppercase; font-style: italic; text-decoration: underline; text-underline-offset: 4px; color: var(--accent) !important; }
+.bt-map { mix-blend-mode: multiply; filter: sepia(.35) saturate(.8); }
+.t-bt .blk-schedule li { grid-template-columns: 6rem 1fr; }
+.t-bt .blk-s-title { font-style: italic; }
+.t-bt .blk-wish { background: transparent; border: 1px solid var(--hair); }
+.t-bt .blk-form, .t-bt .blk-wish-form { margin: 0; }
+.t-bt .blk-submit { justify-self: start; }
+.t-bt .blk-rsvp-body, .t-bt .blk-rsvp-deadline { text-align: left; margin-left: 0 !important; }
+.t-bt .blk-member-mono { font-style: italic; }
+.bt-foot { text-align: center; padding: 3rem 1rem 0; border-top: 1px solid var(--hair); }
+.bt-credit { font-size: .74rem; font-style: italic; color: var(--muted); }

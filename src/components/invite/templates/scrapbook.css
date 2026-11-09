@@ -1,0 +1,68 @@
+/* SCRAPBOOK: polaroids, index cards, handwriting */
+.t-sk { --paper: color-mix(in srgb, var(--bg) 60%, #fff); font-size: 17px; }
+.sk-hero { display: grid; gap: 2rem; align-items: center; padding: clamp(2rem, 6cqi, 4rem) clamp(1.2rem, 5cqi, 3rem) clamp(3rem, 7cqi, 5rem); min-height: var(--hero-h); max-width: 1240px; margin: 0 auto; }
+@container inv (min-width: 900px) { .sk-hero { grid-template-columns: 1.15fr 1fr; gap: 4rem; } }
+.sk-board { position: relative; height: min(110cqi, 560px); }
+.sk-pol { margin: 0; background: #fff; padding: 10px 10px 0; box-shadow: 0 2px 4px rgba(0,0,0,.08), 0 18px 34px -16px rgba(0,0,0,.35); }
+.sk-pol img { width: 100%; aspect-ratio: 1; object-fit: cover; }
+.sk-pol figcaption { color: #3a3a3a; font-size: 1.4rem; text-align: center; padding: .55rem .2rem .7rem; }
+.sk-board .sk-pol { position: absolute; width: min(52%, 300px); transition: transform .4s ease; }
+.sk-pol--0 { left: 22%; top: 2%; transform: rotate(-3deg); z-index: 3; }
+.sk-pol--1 { left: 0; top: 34%; transform: rotate(-11deg); z-index: 2; }
+.sk-pol--2 { right: 0; top: 30%; transform: rotate(9deg); z-index: 1; }
+.sk-board .sk-pol:hover { transform: rotate(0) scale(1.04); z-index: 5; }
+.sk-badge { position: absolute; right: 4%; top: 0; z-index: 4; width: clamp(96px, 16cqi, 140px); aspect-ratio: 1; border-radius: 50%; background: var(--accent); color: var(--on-accent); display: grid; place-content: center; text-align: center; transform: rotate(12deg); box-shadow: 0 10px 20px -10px rgba(0,0,0,.4); }
+.sk-badge span { font-size: .58rem; letter-spacing: .14em; text-transform: uppercase; }
+.sk-badge b { font-size: 1.15rem; line-height: 1.1; }
+.sk-title { text-align: center; }
+@container inv (min-width: 900px) { .sk-title { text-align: left; } }
+.sk-small { font-size: 1.1rem; color: var(--muted); }
+.sk-title h1 { font-size: clamp(3.4rem, 11cqi, 6.6rem); line-height: 1.05; margin: .3rem 0; color: var(--text); }
+.sk-title h1 span { color: var(--accent); }
+.sk-count { margin-top: 2rem; justify-content: center; }
+@container inv (min-width: 900px) { .sk-count { justify-content: flex-start; } }
+.sk-count div { background: var(--paper); padding: .8rem 1rem .6rem; border-radius: 6px; box-shadow: 0 6px 14px -8px rgba(0,0,0,.3); }
+.sk-count div:nth-child(1) { transform: rotate(-3deg); }
+.sk-count div:nth-child(3) { transform: rotate(2.5deg); }
+
+.sk-sec { padding: clamp(3.5rem, 8cqi, 5.5rem) clamp(1.2rem, 5cqi, 3rem); max-width: 1100px; margin: 0 auto; }
+.sk-h { font-size: clamp(2.8rem, 8cqi, 4.6rem); color: var(--accent); margin-bottom: 2rem; }
+.sk-h--0 { transform: rotate(-2deg); }
+.sk-h--1 { text-align: right; transform: rotate(1.5deg); }
+.sk-note { background: var(--paper); padding: 2.4rem clamp(1.4rem, 5cqi, 3rem) 1.8rem; box-shadow: 0 20px 40px -26px rgba(0,0,0,.35); transform: rotate(-.8deg); max-width: 760px; font-size: 1.08rem; line-height: 1.85; border-top: 10px solid color-mix(in srgb, var(--accent) 35%, transparent); }
+.sk-sign { font-size: 2rem; text-align: right; color: var(--accent); margin-top: 1rem !important; }
+.sk-cards { display: grid; gap: 1.6rem; }
+@container inv (min-width: 760px) { .sk-cards { grid-template-columns: 1fr 1fr; } }
+.sk-card { background: var(--paper); padding: 1.8rem 1.6rem; box-shadow: 0 18px 32px -20px rgba(0,0,0,.35); border-top: 22px solid var(--accent); }
+.sk-card--0 { transform: rotate(-1.4deg); }
+.sk-card--1 { transform: rotate(1.6deg); border-top-color: color-mix(in srgb, var(--accent) 55%, var(--bg)); }
+.sk-card-k { font-size: .72rem; letter-spacing: .2em; text-transform: uppercase; color: var(--muted); }
+.sk-card-time { font-size: 2.6rem; margin: .3rem 0; }
+.sk-card-venue { font-weight: 600; font-size: 1.15rem; }
+.sk-btn { display: inline-block; margin-top: 1rem; padding: .6rem 1.2rem; border-radius: 99px; background: var(--accent); color: var(--on-accent) !important; text-decoration: none; font-size: .88rem; font-weight: 600; }
+.sk-center { text-align: center; margin-top: 2rem; }
+.sk-map { border-radius: 14px; transform: rotate(.4deg); box-shadow: 0 18px 32px -20px rgba(0,0,0,.35); }
+.sk-tickets { display: flex; gap: 1.2rem; overflow-x: auto; padding: 1rem .4rem 1.6rem; scroll-snap-type: x mandatory; }
+.sk-ticket { flex: 0 0 220px; scroll-snap-align: start; display: grid; gap: .3rem; background: var(--paper); padding: 1.4rem 1.2rem; border-radius: 10px; border-left: 6px dotted color-mix(in srgb, var(--accent) 60%, transparent); box-shadow: 0 12px 24px -16px rgba(0,0,0,.35); }
+.sk-ticket:nth-child(odd) { transform: rotate(-1.5deg); }
+.sk-ticket:nth-child(even) { transform: rotate(1.5deg); }
+.sk-ticket-time { font-size: 1.9rem; color: var(--accent); }
+.sk-ticket-title { font-weight: 700; }
+.sk-wall { display: grid; gap: 1.8rem 1.2rem; grid-template-columns: repeat(2, 1fr); }
+@container inv (min-width: 760px) { .sk-wall { grid-template-columns: repeat(3, 1fr); } }
+.sk-wall .sk-pol:nth-child(3n+1) { transform: rotate(-3deg); }
+.sk-wall .sk-pol:nth-child(3n+2) { transform: rotate(2deg) translateY(1rem); }
+.sk-wall .sk-pol:nth-child(3n) { transform: rotate(-1deg); }
+.t-sk .blk-wish { border-radius: 4px; box-shadow: 0 12px 22px -14px rgba(0,0,0,.35); }
+.t-sk .blk-wish:nth-child(4n+1) { background: color-mix(in srgb, var(--accent) 22%, #fff); transform: rotate(-2deg); }
+.t-sk .blk-wish:nth-child(4n+2) { background: #fff7c7; transform: rotate(1.5deg); }
+.t-sk .blk-wish:nth-child(4n+3) { background: #dff1ff; transform: rotate(-1deg); }
+.t-sk .blk-wish:nth-child(4n) { background: #e7f7e2; transform: rotate(2deg); }
+.t-sk .blk-wish p, .t-sk .blk-wish cite { color: #333; }
+.t-sk .blk-wish p { font-family: var(--font-script), cursive; font-size: 1.45rem; line-height: 1.25; }
+.t-sk .blk-btn, .t-sk .blk-choice button { border-radius: 99px; text-transform: none; letter-spacing: .02em; font-size: .95rem; font-weight: 600; }
+.t-sk .blk-form, .t-sk .blk-wish-form { background: var(--paper); padding: 2rem; box-shadow: 0 20px 40px -26px rgba(0,0,0,.35); border-radius: 6px; }
+.t-sk .blk-member img, .t-sk .blk-member-mono { border-radius: 0; border: 8px solid #fff; box-shadow: 0 10px 20px -12px rgba(0,0,0,.4); transform: rotate(-3deg); }
+.t-sk .blk-member:nth-child(even) img, .t-sk .blk-member:nth-child(even) .blk-member-mono { transform: rotate(3deg); }
+.sk-foot { text-align: center; padding: 3rem 1rem 0; }
+.sk-foot .s { font-size: clamp(2.6rem, 8cqi, 4rem); color: var(--accent); }

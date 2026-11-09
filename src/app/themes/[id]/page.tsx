@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { InviteSite } from "@/components/invite/InviteSite";
-import { sampleContent } from "@/lib/content";
-import { COLLECTIONS, isThemeId, getTheme, THEMES } from "@/lib/themes";
+import { SAMPLE_WISHES, sampleContent } from "@/lib/content";
+import { COLLECTIONS, isThemeId, getTheme, TEMPLATES, templateOf, THEMES } from "@/lib/themes";
 
 export function generateStaticParams() {
   return THEMES.map((t) => ({ id: t.id }));
@@ -32,7 +32,9 @@ export default async function ThemeDemo({ params }: { params: Promise<{ id: stri
             </Link>
             <div className="hidden min-w-0 sm:block">
               <div className="truncate font-serif text-xl leading-none">{theme.name}</div>
-              <div className="text-xs text-stone">{COLLECTIONS.find((c) => c.id === theme.collection)?.name}</div>
+              <div className="text-xs text-stone">
+                {COLLECTIONS.find((c) => c.id === theme.collection)?.name} · {TEMPLATES.find((t) => t.id === templateOf(theme))?.name} design
+              </div>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -48,7 +50,7 @@ export default async function ThemeDemo({ params }: { params: Promise<{ id: stri
           </div>
         </div>
       </div>
-      <InviteSite themeId={theme.id} content={sampleContent()} mode="demo" />
+      <InviteSite themeId={theme.id} content={sampleContent()} wishes={SAMPLE_WISHES} mode="demo" />
     </>
   );
 }

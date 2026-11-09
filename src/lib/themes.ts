@@ -7,15 +7,62 @@
  * No CSS-drawn decorations.
  */
 
-export type HeroLayout = "fullbleed" | "split" | "arch" | "botanical" | "polaroid";
+import { CREDITS, MORE_THEMES } from "./themes-more";
+
+/** Image treatment hint (used for thumbnails and some templates). */
+export type HeroLayout = "fullbleed" | "split" | "arch" | "botanical" | "polaroid" | "poster" | "card" | "cover" | "storybook";
+
+/**
+ * Templates are complete site architectures: each has its own navigation,
+ * hero composition and its own design for every section. Themes pick one.
+ */
+export type TemplateId =
+  | "classic"
+  | "editorial"
+  | "gallery"
+  | "storybook"
+  | "scrapbook"
+  | "stationery"
+  | "botanical"
+  | "split"
+  | "cinematic"
+  | "grand"
+  | "pop"
+  | "voyage"
+  | "gazette"
+  | "swiss"
+  | "letter";
+
+export const TEMPLATES: { id: TemplateId; name: string; blurb: string }[] = [
+  { id: "classic", name: "Classic Formal", blurb: "Traditional invitation wording, arched portrait, mirrored timeline." },
+  { id: "grand", name: "Grand Ballroom", blurb: "Full-screen photography, parallax interludes, gilded hairlines." },
+  { id: "editorial", name: "Couture Editorial", blurb: "A fashion magazine: cover lines, contents page, feature story." },
+  { id: "gazette", name: "The Gazette", blurb: "A vintage newspaper front page announcing your wedding." },
+  { id: "gallery", name: "Museum Gallery", blurb: "Your wedding as an art exhibition, with wall labels and rooms." },
+  { id: "cinematic", name: "Cinematic", blurb: "Letterboxed hero, film credits and a film-strip gallery." },
+  { id: "voyage", name: "Voyage", blurb: "Postcard hero, boarding-pass details and a travel itinerary." },
+  { id: "stationery", name: "Stationery Suite", blurb: "A layered invitation suite on an envelope-liner backdrop." },
+  { id: "storybook", name: "Storybook", blurb: "Illustrated chapters: your love story told like a picture book." },
+  { id: "scrapbook", name: "Scrapbook", blurb: "Polaroids, index cards and handwriting: playful and personal." },
+  { id: "pop", name: "Pop Party", blurb: "Giant type, marquee names, color blocks and a bento gallery." },
+  { id: "swiss", name: "Swiss Modern", blurb: "Strict grid, numbered sections and huge confident type." },
+  { id: "split", name: "Split Screen", blurb: "A fixed photograph on one side, the story scrolling on the other." },
+  { id: "botanical", name: "Botanical Heirloom", blurb: "Antique plates as specimen figures beside each section." },
+  { id: "letter", name: "Love Letter", blurb: "A handwritten letter to your guests, with postscripts." },
+];
 
 export type CollectionId =
   | "timeless"
   | "garden"
   | "cute"
+  | "illustrated"
+  | "art"
   | "rustic"
   | "modern"
   | "destination"
+  | "city"
+  | "cultural"
+  | "bold"
   | "vintage"
   | "seasonal";
 
@@ -48,15 +95,24 @@ export interface Theme {
   palette: Palette;
   fonts: ThemeFonts;
   displayCase?: "upper" | "normal";
+  /** Set from TEMPLATE_ASSIGNMENTS below. */
+  template?: TemplateId;
+  /** For artwork-based themes: shown on museum labels and credits. */
+  credit?: { title: string; artist: string; year: string };
 }
 
 export const COLLECTIONS: { id: CollectionId; name: string; blurb: string }[] = [
   { id: "timeless", name: "Timeless Elegance", blurb: "Black tie, ivory and gold. Polished and formal." },
   { id: "garden", name: "Romantic Garden", blurb: "Peonies, roses and meadow blooms." },
   { id: "cute", name: "Sweet & Playful", blurb: "Soft pastels, snapshots and a little whimsy." },
+  { id: "illustrated", name: "2D Illustrated", blurb: "Hand-drawn and painted illustrations, storybook style." },
+  { id: "art", name: "Masterpieces", blurb: "Hokusai, Klimt, Van Gogh, Monet, Mucha: public-domain art, gallery-framed." },
   { id: "rustic", name: "Rustic & Boho", blurb: "Pampas, string lights and golden fields." },
   { id: "modern", name: "Modern Minimal", blurb: "Gallery white space and confident type." },
   { id: "destination", name: "Destination", blurb: "Island light, palm shade and sea air." },
+  { id: "city", name: "City & Elopement", blurb: "Paris, Tokyo, New York, Vegas and City Hall." },
+  { id: "cultural", name: "World Traditions", blurb: "Mandaps, lanterns, chuppahs and fiestas." },
+  { id: "bold", name: "Bold & Unexpected", blurb: "Disco balls, neon, gothic romance and fairytale castles." },
   { id: "vintage", name: "Vintage & Royal", blurb: "Heirloom botanicals, velvet tones, gilded nights." },
   { id: "seasonal", name: "Seasonal", blurb: "Autumn harvests and winter white." },
 ];
@@ -84,7 +140,7 @@ export const SAMPLE_GALLERY = [
   U("photo-1606216794074-735e91aa2c92"),
 ];
 
-export const THEMES: Theme[] = [
+const BASE_THEMES: Theme[] = [
   // ─── Timeless Elegance ───────────────────────────────────────────
   {
     id: "ivory-gold",
@@ -434,7 +490,7 @@ export const THEMES: Theme[] = [
   {
     id: "mehndi",
     name: "Mehndi Gold",
-    collection: "vintage",
+    collection: "cultural",
     description: "Henna artistry, saffron and gold. For a celebration rich in tradition.",
     tags: ["henna", "gold", "cultural"],
     layout: "split",
@@ -480,6 +536,43 @@ export const THEMES: Theme[] = [
   },
 ];
 
+/** Which site architecture each theme uses. */
+const TEMPLATE_ASSIGNMENTS: Record<TemplateId, string[]> = {
+  classic: ["ivory-gold", "blush-peony", "ranunculus", "pampas", "spring-garden", "mehndi", "double-happiness", "arabian-nights"],
+  grand: ["grand-estate", "wildflower", "sunflower", "string-lights", "alpine-lake", "royal-burgundy", "gatsby", "winter", "water-lilies", "marigold", "chuppah", "fairytale"],
+  editorial: ["champagne", "orchid-noir", "noir", "golden-union", "paris", "nyc"],
+  gazette: ["editorial-mono", "bookworms", "london", "city-hall"],
+  gallery: ["great-wave", "red-fuji", "the-kiss", "tree-of-life", "the-swing", "primavera", "boating-party", "mucha-spring", "four-seasons", "plum-garden", "arashiyama", "plum-cranes", "crow-blossom", "audubon", "medusae", "moonlit-garden", "lady-shalott"],
+  cinematic: ["black-tie", "midnight", "beach-sunset", "safari", "starry-night", "marrakech", "fireflies", "aurora", "gothic", "tokyo"],
+  voyage: ["santorini", "bali", "tuscany", "cappadocia", "maldives", "lighthouse", "lavender", "lemon-zest", "vineyard", "venice", "ocean-deep"],
+  stationery: ["marble", "anemone", "almond-blossom", "irises", "strawberry-thief", "morris-trellis", "mews"],
+  storybook: ["stargazers", "sunset-hill", "love-balloon", "floating-hearts", "red-string", "forever-young", "watercolor-bloom", "gilded-wash", "blue-daisies", "seaside-cottage", "mountain-night", "silly-goose", "cat-people", "paradise-hills", "peter-rabbit", "bunny"],
+  scrapbook: ["cherry-blossom", "sweetest-day", "macaron", "puppy-love", "picnic", "coffee"],
+  pop: ["strawberry", "balloons", "sprinkles", "folk-florals", "fiesta", "disco", "mirrorball", "neon", "groovy", "our-song", "vegas"],
+  swiss: ["gallery-white", "sage-minimal", "concrete", "white-roses", "calla", "brooklyn"],
+  split: ["secret-garden", "tulip-garden", "golden-field", "autumn", "tropical", "hanbok", "olive-grove", "parasol"],
+  botanical: ["redoute", "botanical-garden"],
+  letter: ["english-rose", "candlelight", "tea-party", "daisy-days"],
+};
+
+const ASSIGNED = new Map<string, TemplateId>();
+for (const [tpl, ids] of Object.entries(TEMPLATE_ASSIGNMENTS) as [TemplateId, string[]][]) ids.forEach((id) => ASSIGNED.set(id, tpl));
+
+const FALLBACK_TEMPLATE: Record<HeroLayout, TemplateId> = {
+  fullbleed: "grand", split: "split", arch: "classic", botanical: "botanical", polaroid: "scrapbook",
+  poster: "gallery", card: "stationery", cover: "editorial", storybook: "storybook",
+};
+
+export const THEMES: Theme[] = [...BASE_THEMES, ...MORE_THEMES].map((t) => ({
+  ...t,
+  template: t.template ?? ASSIGNED.get(t.id) ?? FALLBACK_TEMPLATE[t.layout],
+  credit: t.credit ?? CREDITS[t.id],
+}));
+
+export function templateOf(theme: Theme): TemplateId {
+  return theme.template ?? FALLBACK_TEMPLATE[theme.layout];
+}
+
 export function getTheme(id: string): Theme {
   return THEMES.find((t) => t.id === id) ?? THEMES[0];
 }
@@ -498,11 +591,12 @@ export function img(url: string, width: number) {
 
 export const FONT_CHOICES = {
   display: [
-    "Cormorant Garamond", "Playfair Display", "Bodoni Moda", "Cinzel", "Italiana", "Libre Baskerville",
-    "Fraunces", "DM Serif Display", "Marcellus", "Lora", "IM Fell English", "Poiret One",
+    "Cormorant Garamond", "Playfair Display", "Bodoni Moda", "Cinzel", "Cinzel Decorative", "Italiana", "Libre Baskerville",
+    "Fraunces", "DM Serif Display", "Marcellus", "Lora", "IM Fell English", "Poiret One", "Abril Fatface", "Gloock",
+    "Shrikhand", "Righteous", "Fredoka", "Syne", "Rozha One", "Amiri", "UnifrakturMaguntia",
   ],
   body: ["Montserrat", "Jost", "Lato", "Karla", "Raleway", "Quicksand", "Nunito", "Inter", "EB Garamond", "Josefin Sans", "Cormorant Garamond"],
-  script: ["Pinyon Script", "Great Vibes", "Parisienne", "Allura", "Sacramento", "Dancing Script"],
+  script: ["Pinyon Script", "Great Vibes", "Parisienne", "Allura", "Sacramento", "Dancing Script", "Italianno", "Caveat", "Pacifico"],
 };
 
 // Exact axes each family supports on Google Fonts (an invalid request 400s the whole sheet).
@@ -527,6 +621,12 @@ const FONT_AXES: Record<string, string> = {
   Lato: "ital,wght@0,400;0,700;1,400",
   "DM Serif Display": "ital@0;1",
   "IM Fell English": "ital@0;1",
+  Fredoka: "wght@400;500;600",
+  Syne: "wght@400;500;600;700",
+  Caveat: "wght@400;500;600",
+  Amiri: "ital,wght@0,400;0,700;1,400",
+  "Abril Fatface": "",
+  "Space Mono": "ital,wght@0,400;0,700;1,400",
 };
 
 /** Build a Google Fonts stylesheet URL for a set of families. */

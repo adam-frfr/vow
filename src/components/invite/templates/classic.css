@@ -1,0 +1,71 @@
+/* CLASSIC FORMAL: traditional invitation */
+.t-cl { --hair: color-mix(in srgb, var(--accent) 35%, transparent); }
+.cl-top { text-align: center; padding: 2rem 1rem 0; }
+.cl-mono { display: inline-flex; align-items: center; justify-content: center; gap: .15em; width: 84px; height: 84px; border-radius: 50%; border: 1px solid var(--hair); font-size: 1.7rem; color: var(--accent); }
+.cl-mono .s { font-size: .8em; color: var(--muted); }
+.cl-mono--lg { width: 120px; height: 120px; font-size: 2.4rem; margin-bottom: 1rem; }
+.cl-nav { display: flex; flex-wrap: wrap; justify-content: center; gap: .4rem 1.6rem; margin-top: 1.4rem; padding: .9rem 1rem; border-top: 1px solid var(--hair); border-bottom: 1px solid var(--hair); font-size: .68rem; letter-spacing: .24em; text-transform: uppercase; position: sticky; top: var(--sticky-top, 0); background: var(--bg); z-index: 5; }
+.cl-nav a { text-decoration: none; color: var(--muted); }
+.cl-nav a:hover { color: var(--accent); }
+
+.cl-hero { display: grid; gap: 3rem; align-items: center; padding: clamp(3rem, 8cqi, 5.5rem) clamp(1.2rem, 5cqi, 3rem); max-width: 1120px; margin: 0 auto; }
+@container inv (min-width: 900px) { .cl-hero { grid-template-columns: 1fr 1.1fr; gap: 5rem; } }
+.cl-arch { border-radius: 999px 999px 0 0; overflow: hidden; aspect-ratio: 3/4; padding: 10px; border: 1px solid var(--hair); width: min(100%, 440px); margin: 0 auto; }
+.cl-arch img { width: 100%; height: 100%; object-fit: cover; border-radius: 999px 999px 0 0; }
+.cl-invite { text-align: center; padding: clamp(2rem, 5cqi, 3.2rem) clamp(1.2rem, 4cqi, 2.6rem); border: 4px double var(--hair); position: relative; }
+.cl-host { font-size: .7rem; letter-spacing: .3em; text-transform: uppercase; color: var(--muted); }
+.cl-names { display: flex; flex-direction: column; align-items: center; margin: 1.6rem 0 1.2rem; line-height: 1; }
+.cl-names .d { font-size: clamp(2.6rem, 7cqi, 4.4rem); }
+.cl-and { font-size: clamp(1.8rem, 4cqi, 2.6rem); color: var(--accent); margin: .25em 0; }
+.cl-req { font-style: italic; max-width: 360px; margin: 0 auto !important; }
+.cl-when { margin-top: 1.8rem; display: grid; gap: .1rem; }
+.cl-when p:first-child, .cl-when p:nth-child(3) { font-size: .78rem; letter-spacing: .26em; text-transform: uppercase; }
+.cl-day { font-size: clamp(1.4rem, 3.4cqi, 1.9rem); text-transform: none !important; letter-spacing: 0 !important; font-style: italic; }
+.cl-where { margin-top: 1.4rem !important; font-size: .8rem; letter-spacing: .26em; text-transform: uppercase; }
+.cl-city { font-size: .8rem; letter-spacing: .26em; text-transform: uppercase; color: var(--muted); }
+.cl-count { justify-content: center; margin-top: 2rem; padding-top: 1.6rem; border-top: 1px solid var(--hair); }
+.cl-count b { color: var(--accent); }
+
+.cl-sec { padding: clamp(4rem, 9cqi, 6.5rem) clamp(1.2rem, 5cqi, 3rem); text-align: center; }
+.cl-sec:nth-of-type(odd) { background: var(--surface); }
+.cl-h { font-size: clamp(2.2rem, 6cqi, 3.4rem); }
+.cl-orn { display: flex; align-items: center; justify-content: center; gap: 1rem; margin: 1rem auto 2.6rem; color: var(--accent); }
+.cl-orn span { width: 60px; height: 1px; background: var(--hair); }
+.cl-orn i { font-style: normal; font-size: 1.4rem; }
+.cl-sec .blk-prose, .cl-sec .blk-faq, .cl-sec .blk-registry { max-width: 680px; margin-left: auto; margin-right: auto; }
+.cl-story { display: grid; gap: 2.4rem; max-width: 980px; margin: 0 auto; align-items: center; text-align: left; }
+@container inv (min-width: 800px) { .cl-story { grid-template-columns: 340px 1fr; gap: 4rem; } }
+.cl-arch--sm { width: min(100%, 340px); }
+.cl-drop { font-size: 1.08rem; }
+.cl-drop p:first-child::first-letter { float: left; font-family: var(--font-display), serif; font-size: 4em; line-height: .8; padding: .06em .1em 0 0; color: var(--accent); }
+.cl-events { display: grid; gap: 2rem; max-width: 900px; margin: 0 auto; }
+@container inv (min-width: 700px) { .cl-events { grid-template-columns: 1fr 1fr; } .cl-event + .cl-event { border-left: 1px solid var(--hair); } }
+.cl-event .k { color: var(--accent); }
+.cl-event-time { font-size: 2.4rem; margin: .5rem 0; }
+.cl-event-venue { font-size: 1.1rem; }
+.cl-link { display: inline-block; margin-top: 1rem; font-size: .7rem; letter-spacing: .24em; text-transform: uppercase; text-decoration: none; padding: .7rem 1.4rem; border: 1px solid var(--hair); }
+.cl-link:hover { background: var(--accent); color: var(--on-accent) !important; }
+.cl-center { margin-top: 1.4rem; }
+.cl-map { max-width: 900px; margin-left: auto; margin-right: auto; }
+.cl-timeline { list-style: none; padding: 0; margin: 0 auto; max-width: 860px; position: relative; }
+.cl-timeline::before { content: ""; position: absolute; top: 0; bottom: 0; left: 12px; width: 1px; background: var(--hair); }
+.cl-timeline li { position: relative; padding: 0 0 1.6rem 2.6rem; text-align: left; }
+.cl-timeline li::before { content: ""; position: absolute; left: 7px; top: 1.6rem; width: 11px; height: 11px; transform: rotate(45deg); background: var(--accent); }
+@container inv (min-width: 760px) {
+  .cl-timeline::before { left: 50%; }
+  .cl-timeline li { width: 50%; padding: 0 3rem 2rem 0; text-align: right; }
+  .cl-timeline li::before { left: auto; right: -6px; }
+  .cl-timeline li:nth-child(even) { margin-left: 50%; padding: 0 0 2rem 3rem; text-align: left; }
+  .cl-timeline li:nth-child(even)::before { right: auto; left: -5px; }
+}
+.cl-tl-card { background: var(--bg); padding: 1.3rem 1.5rem; border: 1px solid var(--hair); }
+.cl-sec:nth-of-type(even) .cl-tl-card { background: var(--surface); }
+.cl-tl-time { font-size: .74rem; letter-spacing: .22em; text-transform: uppercase; color: var(--accent); }
+.cl-tl-title { font-size: 1.5rem; margin: .2rem 0; }
+.cl-grid { display: grid; gap: 14px; grid-template-columns: repeat(2, 1fr); max-width: 1080px; margin: 0 auto; }
+@container inv (min-width: 860px) { .cl-grid { grid-template-columns: repeat(3, 1fr); } }
+.cl-grid-item { overflow: hidden; }
+.cl-grid-item img { width: 100%; aspect-ratio: 4/5; object-fit: cover; transition: transform 1.2s ease; }
+.cl-grid-item:hover img { transform: scale(1.05); }
+.t-cl .blk-wish { background: var(--bg); border: 1px solid var(--hair); }
+.cl-foot { text-align: center; padding: 4.5rem 1rem 1rem; }

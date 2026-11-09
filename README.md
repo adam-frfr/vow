@@ -4,15 +4,23 @@ Couples pick a designer theme, write their own words, upload photos, publish to
 their own link (`/sara-and-adam`) and collect RSVPs.
 
 ## Features
-- **32 themes in 8 collections**: Timeless Elegance, Romantic Garden, Sweet & Playful,
-  Rustic & Boho, Modern Minimal, Destination, Vintage & Royal, Seasonal.
-  Five hero layouts (full-bleed photo, editorial split, arch portrait, antique
-  botanical plate, polaroid snapshots). All built on real imagery: no CSS-drawn decoration.
+- **128 themes in 13 collections**, including 2D Illustrated, Masterpieces (public-domain
+  Hokusai, Klimt, Van Gogh, Monet, Mucha…), World Traditions, City & Elopement and Bold & Unexpected.
+  All built on real imagery: no CSS-drawn decoration.
+- **15 site designs** (`src/components/invite/templates/`), each a different architecture:
+  Classic Formal, Grand Ballroom, Couture Editorial, The Gazette (newspaper), Museum Gallery,
+  Cinematic, Voyage (boarding pass), Stationery Suite, Storybook, Scrapbook, Pop Party,
+  Swiss Modern, Split Screen, Botanical Heirloom, Love Letter. Themes are assigned in `TEMPLATE_ASSIGNMENTS`.
 - **Editor** with live desktop/mobile preview and autosave: switch themes, override
   colours and fonts, edit every section, reorder/rename/hide sections, choose a cover photo.
+- **Sections**: story, ceremony & reception (map + add-to-calendar), schedule, wedding party,
+  gallery, our song (Spotify/YouTube), travel, dress code, registry, FAQ, guestbook, RSVP.
+- **"Open your invitation" intro** screen on the live site (toggleable).
+- **Guestbook** with moderation (hide/delete) from the Guests page.
+- **Password-protected sites**, QR code download for printed invites, WhatsApp/email/SMS sharing.
 - **Photo uploads** (JPG/PNG/WebP, magic-byte checked, 10 MB, 40 per site).
-- **RSVP** with guest count, meal choice and notes; guest dashboard with totals and CSV export.
-- Accounts (bcrypt + signed JWT cookie), drafts private until published, rate limiting on auth/RSVP.
+- **RSVP** with guest count, meal choice and notes; guest dashboard with totals, removal and CSV export.
+- Accounts (bcrypt + signed JWT cookie), drafts private until published, rate limiting on auth/RSVP/guestbook.
 
 ## Run locally
 ```bash

@@ -29,12 +29,28 @@ model Site {
   /// JSON: Customization overrides (colors, fonts, cover photo)
   customization String   @default("{}")
   published     Boolean  @default(false)
+  /// bcrypt hash; when set, guests must enter the password to view the site
+  passwordHash  String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   photos        Photo[]
   rsvps         Rsvp[]
+  wishes        Wish[]
 
   @@index([userId])
+}
+
+/// Guestbook entries left on the public site.
+model Wish {
+  id        String   @id @default(cuid())
+  siteId    String
+  site      Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  name      String
+  message   String
+  hidden    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([siteId])
 }
 
 model Photo {

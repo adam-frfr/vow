@@ -5,6 +5,7 @@ import { SiteHeader } from "@/components/ui/SiteHeader";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { parseContent } from "@/lib/content";
+import { DeleteRsvp, WishModeration } from "./GuestActions";
 
 export const metadata: Metadata = { title: "Guests" };
 
@@ -13,7 +14,7 @@ export default async function Guests({ params }: { params: Promise<{ id: string 
   const { id } = await params;
   const site = await db.site.findFirst({
     where: { id, userId: user.id },
-    include: { rsvps: { orderBy: { createdAt: "desc" } } },
+    include: { rsvps: { orderBy: { createdAt: "desc" } }, wishes: { orderBy: { createdAt: "desc" } } },
   });
   if (!site) notFound();
   const c = parseContent(site.content);
@@ -75,12 +76,15 @@ export default async function Guests({ params }: { params: Promise<{ id: string 
                 <th className="px-5 py-3 font-medium">Meal</th>
                 <th className="px-5 py-3 font-medium">Note</th>
                 <th className="px-5 py-3 font-medium">Received</th>
+                <th className="px-5 py-3 font-medium">
+                  <span className="sr-only">Actions</span>
+                </th>
               </tr>
             </thead>
             <tbody>
               {site.rsvps.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-5 py-14 text-center text-stone">
+                  <td colSpan={7} className="px-5 py-14 text-center text-stone">
                     No replies yet. They’ll appear here the moment guests respond.
                   </td>
                 </tr>
@@ -102,11 +106,20 @@ export default async function Guests({ params }: { params: Promise<{ id: string 
                   <td className="px-5 py-3">{r.meal ?? "—"}</td>
                   <td className="max-w-xs px-5 py-3 text-stone">{r.message}</td>
                   <td className="whitespace-nowrap px-5 py-3 text-stone">{r.createdAt.toLocaleDateString("en-US", { month: "short", day: "numeric" })}</td>
+                  <td className="px-5 py-3 text-right">
+                    <DeleteRsvp id={r.id} name={r.name} />
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
+
+        <h2 className="mt-16 font-serif text-4xl">Guestbook</h2>
+        <p className="mb-6 mt-1 text-stone">Notes guests left on your site. Hidden notes don&rsquo;t appear publicly.</p>
+        <WishModeration
+          wishes={site.wishes.map((w) => ({ id: w.id, name: w.name, message: w.message, hidden: w.hidden, createdAt: w.createdAt.toISOString() }))}
+        />
       </main>
     </>
   );

@@ -11,7 +11,8 @@ function diff(target: number) {
   };
 }
 
-export function Countdown({ date }: { date: string }) {
+/** Live countdown. Markup: .blk-countdown > div > b + span (templates style it). */
+export function Countdown({ date, className = "", labels = ["Days", "Hours", "Minutes"] }: { date: string; className?: string; labels?: string[] }) {
   const [now, setNow] = useState<ReturnType<typeof diff> | null>(null);
   const valid = /^\d{4}-\d{2}-\d{2}$/.test(date);
 
@@ -23,21 +24,16 @@ export function Countdown({ date }: { date: string }) {
     return () => clearInterval(t);
   }, [date, valid]);
 
-  if (!valid || !now) return null;
+  if (!valid) return null;
+  const vals = now ? [now.days, now.hours, now.minutes] : ["–", "–", "–"];
   return (
-    <div className="inv-countdown inv-rise inv-rise-3" aria-label="Countdown to the wedding">
-      <div>
-        <b>{now.days}</b>
-        <span>Days</span>
-      </div>
-      <div>
-        <b>{now.hours}</b>
-        <span>Hours</span>
-      </div>
-      <div>
-        <b>{now.minutes}</b>
-        <span>Minutes</span>
-      </div>
+    <div className={`blk-countdown ${className}`} aria-label="Countdown to the wedding">
+      {vals.map((v, i) => (
+        <div key={i}>
+          <b>{v}</b>
+          <span>{labels[i]}</span>
+        </div>
+      ))}
     </div>
   );
 }
