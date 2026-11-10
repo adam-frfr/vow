@@ -5,10 +5,12 @@ import { CardBack, CardFront } from "@/components/card/InvitationCard";
 import { InviteSite } from "@/components/invite/InviteSite";
 import { resolveCard } from "@/lib/card";
 import { SAMPLE_WISHES, sampleContent } from "@/lib/content";
-import { COLLECTIONS, isThemeId, getTheme, TEMPLATE_IDS, TEMPLATES, templateOf, THEMES, type TemplateId } from "@/lib/themes";
+import { COLLECTIONS, isThemeId, getTheme, TEMPLATE_IDS, TEMPLATES, templateOf, THEMES as ALL_LISTED, type TemplateId } from "@/lib/themes";
+import { getCatalog } from "@/lib/catalog";
+import { visibleThemes } from "@/lib/catalog-shared";
 
 export function generateStaticParams() {
-  return THEMES.map((t) => ({ id: t.id }));
+  return ALL_LISTED.map((t) => ({ id: t.id }));
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
@@ -20,7 +22,9 @@ export default async function ThemeDemo({ params, searchParams }: { params: Prom
   const { id } = await params;
   const { design } = await searchParams;
   const forced = design && (TEMPLATE_IDS as string[]).includes(design) ? (design as TemplateId) : undefined;
-  if (!isThemeId(id)) notFound();
+  const catalog = await getCatalog();
+  const THEMES = visibleThemes(catalog);
+  if (!isThemeId(id) || !THEMES.some((t) => t.id === id)) notFound();
   const theme = getTheme(id);
   const i = THEMES.findIndex((t) => t.id === id);
   const prev = THEMES[(i - 1 + THEMES.length) % THEMES.length];
@@ -54,7 +58,7 @@ export default async function ThemeDemo({ params, searchParams }: { params: Prom
           </div>
         </div>
       </div>
-      <InviteSite themeId={theme.id} content={sampleContent()} wishes={SAMPLE_WISHES} mode="demo" template={forced} />
+      <InviteSite themeId={theme.id} content={sampleContent()} wishes={SAMPLE_WISHES} mode="demo" template={forced} art={catalog.art} />
       <MatchingCard themeId={theme.id} />
     </>
   );

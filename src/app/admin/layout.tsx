@@ -10,7 +10,9 @@ const NAV = [
   ["/admin/sites", "Sites"],
   ["/admin/spam", "Spam & abuse"],
   ["/admin/payments", "Payments"],
-  ["/admin/settings", "Settings & AI"],
+  ["/admin/catalog", "Themes & designs"],
+  ["/admin/library", "Art library"],
+  ["/admin/settings", "Settings"],
 ] as const;
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {

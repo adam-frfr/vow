@@ -25,6 +25,8 @@ export interface Floral {
   lib?: boolean;
   /** Dominant colour families, most prominent first. */
   fam?: Family[];
+  /** Uploaded by the admin (no separate thumbnail). */
+  custom?: boolean;
 }
 
 const f = (id: string, name: string, kind: FloralKind, w: number, h: number, tone: Floral["tone"] = "any"): Floral => ({ id, name, kind, w, h, tone });
@@ -100,8 +102,23 @@ const BY_ID = new Map(ALL.map((x) => [x.id, x]));
 export const ALL_FLORALS = ALL;
 export const floralUrl = (id: string) => (BY_ID.get(id)?.lib ? `/library/${id}.webp` : `/florals/${id}.webp`);
 /** Small preview for pickers (originals are already light enough). */
-export const floralThumb = (id: string) => (BY_ID.get(id)?.lib ? `/library/t/${id}.webp` : `/florals/${id}.webp`);
+export const floralThumb = (id: string) => {
+  const a = BY_ID.get(id);
+  return a?.custom ? `/library/${id}.webp` : a?.lib ? `/library/t/${id}.webp` : `/florals/${id}.webp`;
+};
 export const getFloral = (id?: string) => (id ? BY_ID.get(id) : undefined);
+/**
+ * Adds art the admin uploaded (from the database) to the registry. Called on
+ * the server before rendering and in the browser by the components that pick art.
+ */
+export function registerArt(list: Floral[] | undefined) {
+  for (const a of list ?? []) {
+    if (BY_ID.has(a.id)) continue;
+    const art = { ...a, lib: true, custom: true };
+    ALL.push(art);
+    BY_ID.set(a.id, art);
+  }
+}
 export const floralsOf = (kind: FloralKind | FloralKind[]) => ALL.filter((x) => (Array.isArray(kind) ? kind : [kind]).includes(x.kind));
 
 export interface Cutout {

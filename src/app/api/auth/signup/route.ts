@@ -27,7 +27,9 @@ export async function POST(req: Request) {
   if (await db.user.findUnique({ where: { email } })) {
     return NextResponse.json({ error: "An account with that email already exists." }, { status: 409 });
   }
-  const user = await db.user.create({ data: { name, email, passwordHash: await bcrypt.hash(password, 12), lastLoginAt: new Date() } });
+  // The very first account on a fresh deploy becomes the admin (no setup step needed).
+  const first = (await db.user.count()) === 0;
+  const user = await db.user.create({ data: { name, email, passwordHash: await bcrypt.hash(password, 12), lastLoginAt: new Date(), isAdmin: first } });
   await db.loginEvent.create({ data: { userId: user.id, email, ok: true, ipHash: ipHashOf(req), userAgent: (req.headers.get("user-agent") ?? "").slice(0, 200) } });
   const res = NextResponse.json({ ok: true });
   res.cookies.set(SESSION_COOKIE, await signSession(user.id), sessionCookieOptions);

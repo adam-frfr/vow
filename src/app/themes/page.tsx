@@ -1,12 +1,17 @@
 import type { Metadata } from "next";
 import { SiteHeader } from "@/components/ui/SiteHeader";
 import { ThemeGallery } from "./ThemeGallery";
-import { COLLECTIONS, googleFontsHref, TEMPLATES, THEMES } from "@/lib/themes";
+import { COLLECTIONS, googleFontsHref } from "@/lib/themes";
+import { getCatalog } from "@/lib/catalog";
+import { visibleTemplates, visibleThemes } from "@/lib/catalog-shared";
 
 export const metadata: Metadata = { title: "Themes" };
 
 export default async function ThemesPage({ searchParams }: { searchParams: Promise<{ c?: string }> }) {
   const { c } = await searchParams;
+  const catalog = await getCatalog();
+  const THEMES = visibleThemes(catalog);
+  const TEMPLATES = visibleTemplates(catalog);
   return (
     <>
       <link rel="stylesheet" href={googleFontsHref(THEMES.map((t) => t.fonts.script || t.fonts.display))} precedence="default" />
@@ -22,7 +27,7 @@ export default async function ThemesPage({ searchParams }: { searchParams: Promi
             exhibition. Swap photos, colours, fonts and every word.
           </p>
         </div>
-        <ThemeGallery initial={c} />
+        <ThemeGallery initial={c} catalog={catalog} />
       </main>
     </>
   );

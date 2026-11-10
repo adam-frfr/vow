@@ -9,7 +9,7 @@ export default async function AdminUsers({ searchParams }: { searchParams: Promi
   const { q = "", f = "" } = await searchParams;
   const users = await db.user.findMany({
     where: {
-      ...(q ? { OR: [{ email: { contains: q } }, { name: { contains: q } }] } : {}),
+      ...(q ? { OR: [{ email: { contains: q, mode: "insensitive" } }, { name: { contains: q, mode: "insensitive" } }] } : {}),
       ...(f === "blocked" ? { blocked: true } : f === "admins" ? { isAdmin: true } : {}),
     },
     orderBy: { createdAt: "desc" },

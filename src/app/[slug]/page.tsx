@@ -11,6 +11,7 @@ import { formatDate, parseContent, parseCustomization } from "@/lib/content";
 import { hasSiteAccess } from "@/lib/site-access";
 import { helperAvailable } from "@/lib/helper";
 import { AskWidget } from "@/components/invite/AskWidget";
+import { getCatalog } from "@/lib/catalog";
 import type { InviteContent } from "@/lib/content";
 import Link from "next/link";
 import { getTheme, googleFontsHref, img } from "@/lib/themes";
@@ -96,6 +97,7 @@ export default async function PublicInvite({ params, searchParams }: { params: P
         mode={site.published ? "live" : "preview"}
         slug={site.slug}
         hideBranding={site.premium}
+        art={(await getCatalog()).art}
       />
       {tr && <LanguageSwitch slug={site.slug} lang={tr.lang} active={translated} />}
       {site.published && (await helperAvailable(site)) && <AskWidget slug={site.slug} names={`${original.partner1} & ${original.partner2}`} />}

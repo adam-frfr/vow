@@ -36,9 +36,10 @@ export function SettingsForm({ initial }: { initial: S }) {
     const res = await fetch("/api/admin/settings", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(patch) }).catch(() => null);
     const data = await res?.json().catch(() => null);
     if (!res?.ok) return setMsg({ ok: false, text: data?.error ?? "Couldn't save." });
-    setS(data);
+    const { _notice, ...rest } = data;
+    setS(rest);
     setDraft({});
-    setMsg({ ok: true, text: "Saved." });
+    setMsg(_notice ? { ok: _notice.ok, text: `Saved. ${_notice.message}` } : { ok: true, text: "Saved." });
   }
 
   async function test() {
@@ -124,11 +125,11 @@ export function SettingsForm({ initial }: { initial: S }) {
 
       <Section
         title="Payments (Stripe)"
-        hint="While payments are off, every feature is free. Turn them on to sell a one-time Premium upgrade per wedding site. In Stripe: Developers → API keys for the secret key; Developers → Webhooks → add endpoint https://YOUR-DOMAIN/api/pay/webhook with the event checkout.session.completed for the signing secret."
+        hint="While payments are off, every feature is free. Turn them on to sell a one-time Premium upgrade per wedding site. Paste your Stripe secret key (Stripe → Developers → API keys) and save: the webhook is created and its signing secret saved for you."
       >
         {toggle("pay.enabled", "Payments on")}
         {secret("stripe.secretKey", "sk_test_… or sk_live_…")}
-        {secret("stripe.webhookSecret", "whsec_…")}
+        {secret("stripe.webhookSecret", "Filled in automatically when you save the Stripe key")}
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="block">
             <span className="label">Price</span>
@@ -167,7 +168,10 @@ export function SettingsForm({ initial }: { initial: S }) {
         </div>
       </Section>
 
+      <StorageSection s={s} val={val} set={set} secret={secret} dirty={["b2.endpoint", "b2.bucket", "b2.keyId", "b2.appKey"].some((k) => k in draft)} />
+
       <Section title="Website">
+        {toggle("site.maintenance", "Maintenance mode", "Pauses the whole site: visitors and couples see a short “back soon” page. You (admins) can still use everything.")}
         {toggle("site.signupsOpen", "New sign-ups allowed", "Turn off to pause new accounts (existing couples can still sign in).")}
         <label className="block">
           <span className="label">{s["site.announcement"].label}</span>
@@ -189,5 +193,89 @@ export function SettingsForm({ initial }: { initial: S }) {
         </div>
       </div>
     </div>
+  );
+}
+
+function StorageSection({
+  s,
+  val,
+  set,
+  secret,
+  dirty,
+}: {
+  s: S;
+  val: (k: string) => string;
+  set: (k: string, v: string) => void;
+  secret: (k: string, placeholder: string) => React.ReactNode;
+  dirty: boolean;
+}) {
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [progress, setProgress] = useState<{ next: number; total: number } | null>(null);
+  const field = (k: string, placeholder: string) => (
+    <label className="block">
+      <span className="label">{s[k].label}</span>
+      <input className="field" autoComplete="off" placeholder={placeholder} value={val(k)} onChange={(e) => set(k, e.target.value)} />
+    </label>
+  );
+
+  async function test() {
+    setBusy(true);
+    setMsg(null);
+    const res = await fetch("/api/admin/storage/test", { method: "POST" }).catch(() => null);
+    const data = await res?.json().catch(() => null);
+    setBusy(false);
+    setMsg({ ok: !!res?.ok, text: data?.message ?? "Test failed." });
+  }
+
+  async function copyLibrary() {
+    if (!confirm("Copy the whole built-in art library (about 1,100 files, 100 MB) to your Backblaze bucket? It takes a few minutes; keep this tab open.")) return;
+    setBusy(true);
+    setMsg(null);
+    let offset = 0;
+    for (;;) {
+      const res = await fetch("/api/admin/storage/sync", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ offset }) }).catch(() => null);
+      const data = await res?.json().catch(() => null);
+      if (!res?.ok) {
+        setMsg({ ok: false, text: `${data?.error ?? "Copy failed."} Press the button again to continue.` });
+        break;
+      }
+      setProgress({ next: data.next, total: data.total });
+      offset = data.next;
+      if (data.done) {
+        setMsg({ ok: true, text: `Done: all ${data.total} files are on Backblaze. The site now serves the library from there.` });
+        break;
+      }
+    }
+    setBusy(false);
+  }
+
+  return (
+    <Section
+      title="Storage (Backblaze B2)"
+      hint="Holds the art library and couples' photos. Until it is connected, photos are kept in the database and art is served from the copy built into the site. In Backblaze: create a bucket, then App Keys → Add a New Application Key with read and write access to it. The S3 endpoint is shown on the bucket's page."
+    >
+      {field("b2.endpoint", "https://s3.us-west-004.backblazeb2.com")}
+      <div className="grid gap-4 sm:grid-cols-2">
+        {field("b2.bucket", "my-vow-assets")}
+        {field("b2.keyId", "0041a2b3c4d5e6f0000000001")}
+      </div>
+      {secret("b2.appKey", "K004…")}
+      <div className="flex flex-wrap items-center gap-3">
+        <button type="button" className="btn btn-light" disabled={busy || dirty} onClick={test}>
+          Test connection
+        </button>
+        <button type="button" className="btn btn-light" disabled={busy || dirty} onClick={copyLibrary}>
+          {busy && progress ? `Copying… ${progress.next} / ${progress.total}` : "Copy built-in library to Backblaze"}
+        </button>
+        {dirty && <span className="text-xs text-stone">Save first, then test.</span>}
+      </div>
+      {progress && (
+        <div className="h-2 overflow-hidden rounded-full bg-[#f1ece4]">
+          <div className="h-full bg-ink transition-all" style={{ width: `${Math.round((progress.next / progress.total) * 100)}%` }} />
+        </div>
+      )}
+      {msg && <p className={`text-sm ${msg.ok ? "text-emerald-700" : "text-red-700"}`}>{msg.text}</p>}
+    </Section>
   );
 }

@@ -1,12 +1,14 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
+import { useCatalog } from "@/components/CatalogProvider";
+import { visibleThemes } from "@/lib/catalog-shared";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { InviteSite } from "@/components/invite/InviteSite";
 import { SAMPLE_WISHES, SECTION_LABELS, musicEmbed, type Customization, type InviteContent, type SectionId } from "@/lib/content";
-import { COLLECTIONS, FONT_CHOICES, getTheme, img, TEMPLATES, templateOf, THEMES, type CollectionId } from "@/lib/themes";
+import { COLLECTIONS, FONT_CHOICES, getTheme, img, TEMPLATES, templateOf, type CollectionId } from "@/lib/themes";
 import type { Wish } from "@/components/invite/ctx";
 import { ShareTools } from "./ShareTools";
 import { DecorPanel } from "./DecorPanel";
@@ -404,6 +406,7 @@ function DesignPanel({
   setCz: React.Dispatch<React.SetStateAction<Customization>>;
   photos: Photo[];
 }) {
+  const cat = useCatalog();
   const [filter, setFilter] = useState<CollectionId | "all">("all");
   const theme = getTheme(themeId);
   const color = (key: "accent" | "bg" | "text", label: string, fallback: string) => (
@@ -459,7 +462,7 @@ function DesignPanel({
           ))}
         </div>
         <div className="grid grid-cols-3 gap-2">
-          {THEMES.filter((t) => filter === "all" || t.collection === filter).map((t) => (
+          {visibleThemes(cat).filter((t) => filter === "all" || t.collection === filter).map((t) => (
             <button
               key={t.id}
               onClick={() => setThemeId(t.id)}
@@ -869,15 +872,21 @@ function PhotosPanel({
   async function upload(files: FileList | null) {
     if (!files?.length) return;
     setBusy(true);
-    const fd = new FormData();
-    [...files].forEach((f) => fd.append("files", f));
-    const res = await fetch(`/api/sites/${siteId}/photos`, { method: "POST", body: fd }).catch(() => null);
-    const data = await res?.json().catch(() => null);
-    setBusy(false);
-    if (res?.ok) {
+    let added = 0;
+    for (const file of [...files]) {
+      const fd = new FormData();
+      fd.append("files", await shrinkPhoto(file));
+      const res = await fetch(`/api/sites/${siteId}/photos`, { method: "POST", body: fd }).catch(() => null);
+      const data = await res?.json().catch(() => null);
+      if (!res?.ok) {
+        onNotice(data?.error ?? `Upload failed for ${file.name}.`);
+        break;
+      }
+      added += data.photos.length;
       setPhotos((p) => [...p, ...data.photos]);
-      onNotice(`${data.photos.length} photo${data.photos.length > 1 ? "s" : ""} added.`);
-    } else onNotice(data?.error ?? "Upload failed.");
+    }
+    setBusy(false);
+    if (added) onNotice(`${added} photo${added > 1 ? "s" : ""} added.`);
   }
 
   async function remove(p: Photo) {
@@ -1079,4 +1088,21 @@ function PremiumGroup({ siteId, premium, pay }: { siteId: string; premium: boole
       </Group>
     </div>
   );
+}
+
+/** Phone photos are often 5-12 MB; scale them to 2400px (still sharp everywhere) so uploads stay under the host's 4.5 MB limit. */
+async function shrinkPhoto(file: File): Promise<File> {
+  if (file.size < 1.5 * 1024 * 1024 || !/^image\/(jpeg|png|webp)$/.test(file.type)) return file;
+  try {
+    const bmp = await createImageBitmap(file);
+    const scale = Math.min(1, 2400 / Math.max(bmp.width, bmp.height));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(bmp.width * scale);
+    canvas.height = Math.round(bmp.height * scale);
+    canvas.getContext("2d")!.drawImage(bmp, 0, 0, canvas.width, canvas.height);
+    const blob = await new Promise<Blob | null>((r) => canvas.toBlob(r, "image/jpeg", 0.86));
+    return blob && blob.size < file.size ? new File([blob], file.name.replace(/\.\w+$/, ".jpg"), { type: "image/jpeg" }) : file;
+  } catch {
+    return file;
+  }
 }

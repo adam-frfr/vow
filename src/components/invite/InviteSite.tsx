@@ -31,6 +31,8 @@ import { Herbarium } from "./templates/Herbarium";
 import { Wash } from "./templates/Wash";
 import { MORE_COMPONENTS } from "./templates/more";
 import { MORE_TEMPLATES } from "@/lib/templates-more";
+import { registerArt, type Floral } from "@/lib/assets";
+import { RegisterArt } from "./RegisterArt";
 
 const TEMPLATES: Record<TemplateId, (p: { ctx: Ctx }) => React.ReactNode> = {
   classic: Classic,
@@ -75,9 +77,12 @@ export interface InviteSiteProps {
   hideBranding?: boolean;
   /** Editor only: drag/resize/rotate placed art in the preview. */
   stickerEditing?: StickerEditing;
+  /** Art the admin uploaded (so stickers and decor using it can render). */
+  art?: Floral[];
 }
 
-export function InviteSite({ themeId, content, customization: cz = {}, photos = [], wishes = [], mode, slug, template, stickerEditing, hideBranding }: InviteSiteProps) {
+export function InviteSite({ themeId, content, customization: cz = {}, photos = [], wishes = [], mode, slug, template, stickerEditing, hideBranding, art }: InviteSiteProps) {
+  registerArt(art);
   const theme = getTheme(themeId);
   const fonts = {
     display: cz.displayFont || theme.fonts.display,
@@ -135,6 +140,7 @@ export function InviteSite({ themeId, content, customization: cz = {}, photos = 
       data-tone={dark ? "dark" : "light"}
       data-photohover={effects.photoHover ? "" : undefined}
     >
+      {art && art.length > 0 && <RegisterArt art={art} />}
       <link rel="stylesheet" href={googleFontsHref([fonts.display, fonts.body, fonts.script])} precedence="default" />
       {mode === "live" && content.intro && (
         <Intro image={img(ctx.hero, 1600)} initials={initials(content)} names={`${ctx.p1} & ${ctx.p2}`} date={ctx.date} />

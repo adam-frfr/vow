@@ -1,8 +1,10 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
+import { useCatalog } from "@/components/CatalogProvider";
+import { visibleArt } from "@/lib/catalog-shared";
 import { useMemo, useState } from "react";
-import { ALL_FLORALS, floralThumb, getFloral, type Family, type FloralKind } from "@/lib/assets";
+import { floralThumb, getFloral, type Family, type FloralKind } from "@/lib/assets";
 import { floralFamilies } from "@/lib/decor";
 import { STICKER_ANIMS, type Sticker, type StickerAnim } from "@/lib/stickers";
 
@@ -52,16 +54,17 @@ export function LibraryPanel({
   const [kind, setKind] = useState<(typeof KINDS)[number]["id"]>("all");
   const [fam, setFam] = useState<Family | null>(null);
   const [q, setQ] = useState("");
+  const cat = useCatalog();
   const items = useMemo(() => {
     const k = KINDS.find((x) => x.id === kind)?.kinds ?? STICKERABLE;
     const words = q.toLowerCase().split(/\s+/).filter(Boolean);
-    return ALL_FLORALS.filter(
+    return visibleArt(cat).filter(
       (f) =>
         k.includes(f.kind) &&
         (!fam || floralFamilies(f).includes(fam)) &&
         words.every((w) => f.name.toLowerCase().includes(w) || f.kind.includes(w) || floralFamilies(f).some((x) => x.includes(w))),
     );
-  }, [kind, fam, q]);
+  }, [kind, fam, q, cat]);
   const sel = stickers.find((s) => s.id === selected);
   const selArt = sel && getFloral(sel.asset);
 

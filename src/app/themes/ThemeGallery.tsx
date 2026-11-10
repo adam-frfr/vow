@@ -2,9 +2,12 @@
 
 import { useMemo, useState } from "react";
 import { ThemeCard } from "@/components/ui/ThemeCard";
-import { COLLECTIONS, TEMPLATES, templateOf, THEMES, type CollectionId, type TemplateId } from "@/lib/themes";
+import { COLLECTIONS, templateOf, type CollectionId, type TemplateId } from "@/lib/themes";
+import { visibleTemplates, visibleThemes, type Catalog } from "@/lib/catalog-shared";
 
-export function ThemeGallery({ initial, linkPrefix = "/themes/" }: { initial?: string; linkPrefix?: string }) {
+export function ThemeGallery({ initial, linkPrefix = "/themes/", catalog }: { initial?: string; linkPrefix?: string; catalog: Catalog }) {
+  const THEMES = useMemo(() => visibleThemes(catalog), [catalog]);
+  const TEMPLATES = useMemo(() => visibleTemplates(catalog), [catalog]);
   const [active, setActive] = useState<CollectionId | "all">(
     COLLECTIONS.some((c) => c.id === initial) ? (initial as CollectionId) : "all",
   );
@@ -16,7 +19,7 @@ export function ThemeGallery({ initial, linkPrefix = "/themes/" }: { initial?: s
     return THEMES.filter((t) => active === "all" || t.collection === active)
       .filter((t) => design === "all" || templateOf(t) === design)
       .filter((t) => !needle || [t.name, t.description, ...t.tags].join(" ").toLowerCase().includes(needle));
-  }, [active, design, q]);
+  }, [active, design, q, THEMES]);
 
   const tabs = [{ id: "all" as const, name: "All themes" }, ...COLLECTIONS];
   const designInfo = TEMPLATES.find((t) => t.id === design);

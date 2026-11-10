@@ -1,10 +1,12 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
+import { useCatalog } from "@/components/CatalogProvider";
+import { visibleArt } from "@/lib/catalog-shared";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { CardBack, CardFront } from "@/components/card/InvitationCard";
-import { ALL_FLORALS, floralThumb } from "@/lib/assets";
+import { floralThumb } from "@/lib/assets";
 import { resolveCard } from "@/lib/card";
 import type { Customization, InviteContent } from "@/lib/content";
 import { CARD_COLORWAYS, CARD_FINISHES, CARD_STYLES, type CardSettings } from "@/lib/stickers";
@@ -68,8 +70,9 @@ export function CardStudio({
   }, [cz, siteId]);
 
   const url = origin ? `${origin}/${slug}` : "";
-  const arts = ALL_FLORALS.filter((f) => (artKind === "frame" ? f.kind === "wreath" || f.kind === "frame" : f.kind === "bouquet" || f.kind === "corner"));
-  const patterns = ALL_FLORALS.filter((f) => f.kind === "pattern");
+  const cat = useCatalog();
+  const arts = visibleArt(cat).filter((f) => (artKind === "frame" ? f.kind === "wreath" || f.kind === "frame" : f.kind === "bouquet" || f.kind === "corner"));
+  const patterns = visibleArt(cat).filter((f) => f.kind === "pattern");
   const text = (k: keyof CardSettings, label: string, value: string) => (
     <label className="block">
       <span className="label">{label}</span>

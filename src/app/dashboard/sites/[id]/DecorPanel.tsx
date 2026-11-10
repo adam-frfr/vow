@@ -1,7 +1,9 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { CUTOUTS, cutoutFrame, floralsOf, floralUrl, type FloralKind } from "@/lib/assets";
+import { useCatalog } from "@/components/CatalogProvider";
+import { visibleArt, visibleTemplates } from "@/lib/catalog-shared";
+import { CUTOUTS, cutoutFrame, floralUrl, type FloralKind } from "@/lib/assets";
 import type { Customization } from "@/lib/content";
 import { luminance, resolveDecorStyle, STYLE_LABELS, type Decor, type StyleAxes } from "@/lib/decor";
 import { getTheme, TEMPLATES, templateOf, type TemplateId } from "@/lib/themes";
@@ -32,7 +34,8 @@ function FloralPicker({
   onChange: (v: string | undefined) => void;
   dark: boolean;
 }) {
-  const items = floralsOf(kinds);
+  const cat = useCatalog();
+  const items = visibleArt(cat).filter((f) => kinds.includes(f.kind));
   const tile = (selected: boolean) =>
     `relative overflow-hidden rounded-lg border bg-[#f6efe4] transition ${selected ? "border-ink ring-2 ring-ink" : "border-line hover:border-stone"}`;
   return (
@@ -103,6 +106,7 @@ function Segmented<K extends string>({
 }
 
 export function DecorPanel({ themeId, cz, setCz }: { themeId: string; cz: Customization; setCz: SetCz }) {
+  const cat = useCatalog();
   const theme = getTheme(themeId);
   const tplId = (cz.template as TemplateId) || templateOf(theme);
   const effective = resolveDecorStyle(theme, tplId, { decor: cz.decor, style: cz.style });
@@ -121,7 +125,7 @@ export function DecorPanel({ themeId, cz, setCz }: { themeId: string; cz: Custom
           onChange={(e) => setCz((c) => ({ ...c, template: e.target.value || undefined }))}
         >
           <option value="">Theme default ({TEMPLATES.find((t) => t.id === templateOf(theme))?.name})</option>
-          {TEMPLATES.map((t) => (
+          {visibleTemplates(cat).map((t) => (
             <option key={t.id} value={t.id}>
               {t.name}
             </option>

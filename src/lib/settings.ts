@@ -18,6 +18,11 @@ export const SETTINGS = {
   "stripe.webhookSecret": { secret: true, default: "", label: "Stripe webhook signing secret" },
   "site.signupsOpen": { secret: false, default: "true", label: "New sign-ups allowed" },
   "site.announcement": { secret: false, default: "", label: "Dashboard announcement" },
+  "site.maintenance": { secret: false, default: "false", label: "Maintenance mode (site paused for everyone but admins)" },
+  "b2.endpoint": { secret: false, default: "", label: "Backblaze S3 endpoint (e.g. https://s3.us-west-004.backblazeb2.com)" },
+  "b2.bucket": { secret: false, default: "", label: "Backblaze bucket name" },
+  "b2.keyId": { secret: false, default: "", label: "Backblaze application key ID" },
+  "b2.appKey": { secret: true, default: "", label: "Backblaze application key" },
 } as const;
 export type SettingKey = keyof typeof SETTINGS;
 
@@ -53,4 +58,21 @@ export async function settingsForAdmin() {
     out[k] = def.secret ? { value: v ? `••••${v.slice(-4)}` : "", secret: true, label: def.label, set: !!v } : { value: v, secret: false, label: def.label };
   }
   return out;
+}
+
+/** Internal JSON settings the admin edits through dedicated pages (not the settings form). */
+export async function getJson<T>(key: string, fallback: T): Promise<T> {
+  const raw = (await all()).get(key);
+  if (!raw) return fallback;
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    return fallback;
+  }
+}
+
+export async function setJson(key: string, value: unknown) {
+  const v = JSON.stringify(value);
+  await db.setting.upsert({ where: { key }, create: { key, value: v }, update: { value: v } });
+  cache = null;
 }

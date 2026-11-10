@@ -1,7 +1,7 @@
 import "server-only";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { db } from "./db";
-import { getBool, getSetting } from "./settings";
+import { getBool, getSetting, setSetting } from "./settings";
 
 /** Stripe REST API. STRIPE_API_BASE exists only for local testing against a mock. */
 const BASE = () => process.env.STRIPE_API_BASE || "https://api.stripe.com/v1";
@@ -111,4 +111,31 @@ export function verifyStripeSignature(payload: string, header: string | null, se
       const exp = Buffer.from(expected, "hex");
       return sig.length === exp.length && timingSafeEqual(sig, exp);
     });
+}
+
+/**
+ * Points Stripe at this site's webhook and saves the signing secret, so the
+ * admin never has to open Stripe's dashboard. Replaces any earlier endpoint
+ * for the same URL (Stripe only reveals a secret when an endpoint is created).
+ */
+export async function ensureWebhook(origin: string): Promise<{ ok: boolean; message: string }> {
+  const url = `${origin.replace(/\/+$/, "")}/api/pay/webhook`;
+  const local = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
+  if (!url.startsWith("https://") && !(local && process.env.STRIPE_API_BASE)) {
+    return { ok: false, message: "Stripe webhooks need a public https address. This will happen automatically when you save the key on your live site." };
+  }
+  try {
+    const list = await stripe("/webhook_endpoints?limit=100");
+    for (const ep of (list?.data ?? []) as { id: string; url: string }[]) {
+      if (ep.url === url) await stripe(`/webhook_endpoints/${ep.id}`, { method: "DELETE" });
+    }
+    const created = await stripe("/webhook_endpoints", {
+      form: { url, "enabled_events[0]": "checkout.session.completed", description: "Vow wedding sites: Premium upgrades" },
+    });
+    if (!created?.secret) return { ok: false, message: "Stripe created the webhook but did not return its secret." };
+    await setSetting("stripe.webhookSecret", created.secret);
+    return { ok: true, message: `Stripe webhook set up for ${url}.` };
+  } catch (e) {
+    return { ok: false, message: `Couldn't set up the Stripe webhook: ${(e as Error).message}` };
+  }
 }

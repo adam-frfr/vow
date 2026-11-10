@@ -1,12 +1,13 @@
-// SQLite for local development. To go to production, switch provider to
-// "postgresql" and point DATABASE_URL at Postgres (Supabase, Neon, RDS...).
+// Postgres everywhere: Supabase in production, `npx prisma dev` locally.
+// DATABASE_URL = pooled connection (app), DIRECT_URL = direct connection (migrations).
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model User {
@@ -153,4 +154,26 @@ model Rsvp {
   createdAt DateTime @default(now())
 
   @@index([siteId])
+}
+
+/// Files kept in the database when no Backblaze B2 bucket is configured yet.
+model StoredFile {
+  key       String   @id
+  type      String
+  data      Bytes
+  size      Int
+  createdAt DateTime @default(now())
+}
+
+/// Art uploaded by the admin (the built-in library lives in /assets and on B2).
+model ArtAsset {
+  id        String   @id
+  name      String
+  kind      String
+  w         Int
+  h         Int
+  tone      String   @default("any")
+  /// Comma-separated colour families (pink,red,purple,blue,green,yellow,neutral).
+  fam       String   @default("")
+  createdAt DateTime @default(now())
 }

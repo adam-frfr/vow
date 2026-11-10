@@ -1,7 +1,9 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { floralsOf, floralThumb } from "@/lib/assets";
+import { useCatalog } from "@/components/CatalogProvider";
+import { visibleArt } from "@/lib/catalog-shared";
+import { floralThumb } from "@/lib/assets";
 import type { Customization } from "@/lib/content";
 import { AMBIENTS, AMOUNTS, REVEALS, type Effects } from "@/lib/stickers";
 import { Chip } from "./LibraryPanel";
@@ -51,7 +53,8 @@ export function EffectsPanel({
 }) {
   const fx: Effects = { ...themeEffects, ...(cz.effects ?? {}) };
   const set = (patch: Partial<Effects>) => setCz((c) => ({ ...c, effects: { ...(c.effects ?? {}), ...patch } }));
-  const textures = floralsOf("texture");
+  const cat = useCatalog();
+  const textures = visibleArt(cat).filter((f) => f.kind === "texture");
 
   return (
     <>

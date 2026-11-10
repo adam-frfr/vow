@@ -5,17 +5,22 @@ import "./landing.css";
 import { SiteHeader } from "@/components/ui/SiteHeader";
 import { ThemeCard } from "@/components/ui/ThemeCard";
 import { CUTOUTS, FLORALS, floralUrl } from "@/lib/assets";
-import { COLLECTIONS, getTheme, googleFontsHref, TEMPLATES, templateOf, THEMES } from "@/lib/themes";
+import { COLLECTIONS, getTheme, googleFontsHref, templateOf } from "@/lib/themes";
+import { getCatalog } from "@/lib/catalog";
+import { visibleTemplates, visibleThemes } from "@/lib/catalog-shared";
+
+/** Re-checked every minute so admin changes (hidden themes, designs) show up. */
+export const revalidate = 60;
 import { BloomAside, CandleDemo, HeroFlorals } from "./LandingMotion";
 
 const FAN = ["atelier-peony", "candlelit-noir", "great-wave"];
 /** A dozen designs that show the range; the rest are one click away. */
 const SHOWCASE = ["menu", "passport", "fineline", "vinyl", "timeline", "herbarium", "deco", "ticket", "gallery", "washi", "candlelit", "bento"] as const;
 
-const FEATURES: [string, string][] = [
+const features = (designs: number): [string, string][] => [
   ["Scroll-animated themes", "Real footage that moves as guests scroll: a candle lights, a flower opens, a match strikes."],
   ["Painted florals", "Hand-painted watercolour florals that bloom onto the page like wet ink. Pick your own."],
-  [`${TEMPLATES.length} site designs`, "A dinner menu, a passport, a vinyl record, a museum, a love letter… switch any time."],
+  [`${designs} site designs`, "A dinner menu, a passport, a vinyl record, a museum, a love letter… switch any time."],
   ["A writing assistant", "Stuck on your story or FAQ? AI drafts it in your voice from your details, never inventing facts. You edit every word."],
   ["A helper for guests", "Guests ask “is there parking?” and get an answer from your own site, any time of night."],
   ["Matching printed invitation", "Every theme comes with a printable 5×7 card in the same art and type, with a QR code to your site."],
@@ -26,9 +31,14 @@ const FEATURES: [string, string][] = [
   ["Share it anywhere", "A QR code for printed invitations, add-to-calendar, maps and one-tap sharing."],
 ];
 
-export default function Home() {
+export default async function Home() {
+  const catalog = await getCatalog();
+  const THEMES = visibleThemes(catalog);
+  const TEMPLATES = visibleTemplates(catalog);
+  const FEATURES = features(TEMPLATES.length);
   const fan = FAN.map(getTheme);
-  const showcase = SHOWCASE.map((id) => TEMPLATES.find((t) => t.id === id)!)
+  const showcase = SHOWCASE.map((id) => TEMPLATES.find((t) => t.id === id))
+    .filter((tpl) => !!tpl)
     .map((tpl) => ({ tpl, theme: THEMES.find((t) => templateOf(t) === tpl.id)! }))
     .filter((x) => x.theme);
   const fonts = [...new Set(THEMES.slice(0, 40).map((t) => t.fonts.script || t.fonts.display))];

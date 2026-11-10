@@ -1,13 +1,22 @@
 import type { NextConfig } from "next";
 
+/** The built-in art library lives in /assets and is served by route handlers (B2 first, this copy as fallback). */
+const art = (root: string) => [`./assets/${root}/**/*`];
+
 const nextConfig: NextConfig = {
+  outputFileTracingIncludes: {
+    "/library/[...path]": art("library"),
+    "/florals/[...path]": art("florals"),
+    "/fx/[...path]": art("fx"),
+    "/cutouts/[...path]": art("cutouts"),
+    "/api/admin/storage/sync": ["./assets/**/*"],
+  },
   webpack(config, { dev }) {
     if (dev) {
-      // The SQLite database and uploaded photos live in the project folder; writing them must
-      // not trigger a recompile (a request racing a recompile can fail in dev).
+      // Uploaded files and local tooling must not trigger a recompile mid-request.
       config.watchOptions = {
         ...config.watchOptions,
-        ignored: ["**/node_modules/**", "**/.git/**", "**/.next/**", "**/prisma/*.db*", "**/uploads/**", "**/.claude/**"],
+        ignored: ["**/node_modules/**", "**/.git/**", "**/.next/**", "**/prisma/*.db*", "**/uploads/**", "**/.claude/**", "**/assets/**"],
       };
     }
     return config;

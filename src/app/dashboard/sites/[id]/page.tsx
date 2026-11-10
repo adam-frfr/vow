@@ -6,6 +6,8 @@ import { parseContent, parseCustomization } from "@/lib/content";
 import { googleFontsHref, THEMES } from "@/lib/themes";
 import { Editor } from "./Editor";
 import { confirmSession, payConfig } from "@/lib/stripe";
+import { getCatalog } from "@/lib/catalog";
+import { CatalogProvider } from "@/components/CatalogProvider";
 
 export const metadata: Metadata = { title: "Editor" };
 
@@ -24,10 +26,12 @@ export default async function EditSite({ params, searchParams }: { params: Promi
   });
   if (!site) notFound();
   const pay = await payConfig();
+  const catalog = await getCatalog();
 
   return (
     <>
       <link rel="stylesheet" href={googleFontsHref(THEMES.map((t) => t.fonts.script || t.fonts.display))} precedence="default" />
+      <CatalogProvider catalog={catalog}>
       <Editor
         site={{ id: site.id, slug: site.slug, themeId: site.themeId, published: site.published, isProtected: !!site.passwordHash, premium: site.premium || justPaid }}
         pay={{ ...pay, justPaid, cancelled: paid === "cancelled" }}
@@ -36,6 +40,7 @@ export default async function EditSite({ params, searchParams }: { params: Promi
         initialPhotos={site.photos.map((p) => ({ id: p.id, url: p.url }))}
         initialWishes={site.wishes.map((w) => ({ id: w.id, name: w.name, message: w.message, createdAt: w.createdAt.toISOString() }))}
       />
+      </CatalogProvider>
     </>
   );
 }

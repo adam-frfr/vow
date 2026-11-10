@@ -1,12 +1,14 @@
 "use client";
 
+import { visibleThemes, type Catalog } from "@/lib/catalog-shared";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { ThemeMatch } from "../sites/[id]/AiAssist";
 import { ThemeCard } from "@/components/ui/ThemeCard";
-import { COLLECTIONS, getTheme, THEMES, type CollectionId } from "@/lib/themes";
+import { COLLECTIONS, getTheme, type CollectionId } from "@/lib/themes";
 
-export function NewSiteForm({ initialTheme }: { initialTheme?: string }) {
+export function NewSiteForm({ initialTheme, catalog }: { initialTheme?: string; catalog: Catalog }) {
+  const THEMES = visibleThemes(catalog);
   const router = useRouter();
   const [themeId, setThemeId] = useState(initialTheme ?? "");
   const [step, setStep] = useState<1 | 2>(initialTheme ? 2 : 1);

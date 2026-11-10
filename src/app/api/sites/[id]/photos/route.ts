@@ -21,7 +21,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
   const created = [];
   for (const [i, file] of files.entries()) {
-    if (file.size > MAX_UPLOAD_BYTES) return NextResponse.json({ error: `${file.name} is larger than 10 MB.` }, { status: 400 });
+    if (file.size > MAX_UPLOAD_BYTES) return NextResponse.json({ error: `${file.name} is larger than 4 MB.` }, { status: 400 });
     const bytes = Buffer.from(await file.arrayBuffer());
     const type = sniffImageType(bytes);
     if (!type) return NextResponse.json({ error: `${file.name} isn't a JPG, PNG or WebP image.` }, { status: 400 });

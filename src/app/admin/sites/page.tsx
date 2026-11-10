@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 export default async function AdminSites({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
   const { q = "" } = await searchParams;
   const sites = await db.site.findMany({
-    where: q ? { OR: [{ slug: { contains: q } }, { user: { email: { contains: q } } }] } : {},
+    where: q ? { OR: [{ slug: { contains: q, mode: "insensitive" } }, { user: { email: { contains: q, mode: "insensitive" } } }] } : {},
     orderBy: { updatedAt: "desc" },
     take: 200,
     include: { user: { select: { email: true, blocked: true } }, _count: { select: { rsvps: true, wishes: true, photos: true } } },
