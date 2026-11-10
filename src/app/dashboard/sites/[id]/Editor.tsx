@@ -11,6 +11,7 @@ import type { Wish } from "@/components/invite/ctx";
 import { ShareTools } from "./ShareTools";
 import { DecorPanel } from "./DecorPanel";
 import { EffectsPanel } from "./EffectsPanel";
+import { AiButton, AiSite, FaqAi, ThemeMatch, TranslatePanel } from "./AiAssist";
 import { LibraryPanel } from "./LibraryPanel";
 import { anchorAt, measure } from "@/components/invite/StickerLayer";
 import { getFloral } from "@/lib/assets";
@@ -27,15 +28,17 @@ export function Editor({
   initialCustomization,
   initialPhotos,
   initialWishes,
+  pay,
 }: {
-  site: { id: string; slug: string; themeId: string; published: boolean; isProtected: boolean };
+  site: { id: string; slug: string; themeId: string; published: boolean; isProtected: boolean; premium: boolean };
+  pay: { live: boolean; amount: number; currency: string; features: string[]; justPaid: boolean; cancelled: boolean };
   initialContent: InviteContent;
   initialCustomization: Customization;
   initialPhotos: Photo[];
   initialWishes: Wish[];
 }) {
   const router = useRouter();
-  const [tab, setTab] = useState<Tab>("design");
+  const [tab, setTab] = useState<Tab>(pay.justPaid || pay.cancelled ? "settings" : "design");
   const [themeId, setThemeId] = useState(site.themeId);
   const [content, setContent] = useState(initialContent);
   const [cz, setCz] = useState(initialCustomization);
@@ -154,6 +157,7 @@ export function Editor({
   }
 
   return (
+    <AiSite.Provider value={site.id}>
     <div className="flex h-svh flex-col bg-cream">
       {/* Top bar */}
       <header className="flex h-14 shrink-0 items-center justify-between gap-3 border-b border-line bg-white px-4">
@@ -248,6 +252,10 @@ export function Editor({
             )}
             {tab === "settings" && (
               <SettingsPanel
+                premium={site.premium}
+                pay={pay}
+                translation={cz.translation}
+                onTranslation={(t) => setCz((x) => ({ ...x, translation: t }))}
                 siteId={site.id}
                 slug={slug}
                 published={published}
@@ -306,6 +314,7 @@ export function Editor({
         <div className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-full bg-ink px-5 py-3 text-sm text-white shadow-lg">{notice}</div>
       )}
     </div>
+    </AiSite.Provider>
   );
 }
 
@@ -339,6 +348,7 @@ function Text({
   placeholder,
   type = "text",
   max,
+  ai,
 }: {
   label: string;
   value: string;
@@ -347,8 +357,10 @@ function Text({
   placeholder?: string;
   type?: string;
   max?: number;
+  /** Adds "Write with AI" for this field. */
+  ai?: string;
 }) {
-  return (
+  const input = (
     <label className="block">
       <span className="label">{label}</span>
       {multiline ? (
@@ -357,6 +369,15 @@ function Text({
         <input className="field" type={type} value={value} placeholder={placeholder} maxLength={max} onChange={(e) => onChange(e.target.value)} />
       )}
     </label>
+  );
+  if (!ai) return input;
+  return (
+    <div>
+      {input}
+      <div className="mt-1.5">
+        <AiButton field={ai} value={value} onApply={onChange} />
+      </div>
+    </div>
   );
 }
 
@@ -419,6 +440,9 @@ function DesignPanel({
 
   return (
     <>
+      <div className="mb-8">
+        <ThemeMatch onPick={setThemeId} />
+      </div>
       <Group
         title="Theme"
         hint={`Current design: ${TEMPLATES.find((x) => x.id === templateOf(theme))?.name}. ${TEMPLATES.find((x) => x.id === templateOf(theme))?.blurb} Switch any time; your words and photos stay put.`}
@@ -550,8 +574,8 @@ function ContentPanel({
           <Text label="Date" type="date" value={c.date} onChange={(v) => patch("date", v)} />
           <Text label="Location" value={c.location} onChange={(v) => patch("location", v)} max={120} />
         </div>
-        <Text label="Headline" value={c.headline} onChange={(v) => patch("headline", v)} placeholder="Together with their families" max={120} />
-        <Text label="Tagline" value={c.tagline} onChange={(v) => patch("tagline", v)} placeholder="invite you to celebrate their wedding" max={200} />
+        <Text ai="headline" label="Headline" value={c.headline} onChange={(v) => patch("headline", v)} placeholder="Together with their families" max={120} />
+        <Text ai="tagline" label="Tagline" value={c.tagline} onChange={(v) => patch("tagline", v)} placeholder="invite you to celebrate their wedding" max={200} />
         <Toggle
           checked={c.intro}
           onChange={(v) => patch("intro", v)}
@@ -561,7 +585,7 @@ function ContentPanel({
       </Group>
 
       <Group title="Our story">
-        <Text label="Your story" multiline value={c.story.body} onChange={(v) => patch("story", { body: v })} max={4000} />
+        <Text ai="story" label="Your story" multiline value={c.story.body} onChange={(v) => patch("story", { body: v })} max={4000} />
       </Group>
 
       <Group title="Ceremony & reception">
@@ -634,11 +658,15 @@ function ContentPanel({
           max={300}
         />
         {c.music.url && !musicEmbed(c.music.url) && <p className="text-xs text-red-700">That link isn&rsquo;t a Spotify or YouTube song link.</p>}
-        <Text label="A note about it" value={c.music.note} onChange={(v) => patch("music", { ...c.music, note: v })} max={300} />
+        <Text ai="musicNote" label="A note about it" value={c.music.note} onChange={(v) => patch("music", { ...c.music, note: v })} max={300} />
       </Group>
 
       <Group title="Guestbook" hint="Guests can leave you notes on your site. You can hide any of them from the Guests page.">
-        <Text label="Invitation to write" multiline value={c.wishes.body} onChange={(v) => patch("wishes", { body: v })} max={300} />
+        <Text ai="wishes" label="Invitation to write" multiline value={c.wishes.body} onChange={(v) => patch("wishes", { body: v })} max={300} />
+      </Group>
+
+      <Group title="Guest helper" hint="An “Ask us anything” button on your site. It answers guests' questions using only what you've written here, and says so when it doesn't know.">
+        <Toggle checked={c.ask.enabled} onChange={(v) => patch("ask", { enabled: v })} label="Let guests ask questions" hint="Fill in your details, travel and FAQ so it has good answers." />
       </Group>
 
       <Group title="Schedule">
@@ -668,15 +696,15 @@ function ContentPanel({
       </Group>
 
       <Group title="Travel & stay">
-        <Text label="Details" multiline value={c.travel.body} onChange={(v) => patch("travel", { body: v })} max={3000} />
+        <Text ai="travel" label="Details" multiline value={c.travel.body} onChange={(v) => patch("travel", { body: v })} max={3000} />
       </Group>
 
       <Group title="Dress code">
-        <Text label="Details" multiline value={c.dressCode.body} onChange={(v) => patch("dressCode", { body: v })} max={1000} />
+        <Text ai="dressCode" label="Details" multiline value={c.dressCode.body} onChange={(v) => patch("dressCode", { body: v })} max={1000} />
       </Group>
 
       <Group title="Registry">
-        <Text label="Message" multiline value={c.registry.body} onChange={(v) => patch("registry", { ...c.registry, body: v })} max={1000} />
+        <Text ai="registry" label="Message" multiline value={c.registry.body} onChange={(v) => patch("registry", { ...c.registry, body: v })} max={1000} />
         {c.registry.links.map((l, i) => {
           const set = (k: "label" | "url", v: string) =>
             patch("registry", { ...c.registry, links: c.registry.links.map((x, j) => (j === i ? { ...x, [k]: v } : x)) });
@@ -712,6 +740,7 @@ function ContentPanel({
             </div>
           );
         })}
+        <FaqAi onAdd={(items) => patch("faq", { items: [...c.faq.items, ...items].slice(0, 30) })} />
         {c.faq.items.length < 30 && (
           <button className="btn btn-light w-full" onClick={() => patch("faq", { items: [...c.faq.items, { q: "", a: "" }] })}>
             + Add question
@@ -721,7 +750,7 @@ function ContentPanel({
 
       <Group title="RSVP">
         <Text label="Reply by" type="date" value={c.rsvp.deadline} onChange={(v) => patch("rsvp", { ...c.rsvp, deadline: v })} />
-        <Text label="Message" multiline value={c.rsvp.body} onChange={(v) => patch("rsvp", { ...c.rsvp, body: v })} max={500} />
+        <Text ai="rsvp" label="Message" multiline value={c.rsvp.body} onChange={(v) => patch("rsvp", { ...c.rsvp, body: v })} max={500} />
         <label className="block">
           <span className="label">Max guests per reply</span>
           <select className="field" value={c.rsvp.maxGuests} onChange={(e) => patch("rsvp", { ...c.rsvp, maxGuests: Number(e.target.value) })}>
@@ -903,6 +932,10 @@ function SettingsPanel({
   names,
   onSlug,
   onPassword,
+  translation,
+  onTranslation,
+  premium,
+  pay,
 }: {
   siteId: string;
   slug: string;
@@ -911,6 +944,10 @@ function SettingsPanel({
   names: string;
   onSlug: (s: string) => Promise<void>;
   onPassword: (pw: string | null) => Promise<boolean>;
+  translation?: Customization["translation"];
+  onTranslation: (t: Customization["translation"]) => void;
+  premium: boolean;
+  pay: { live: boolean; amount: number; currency: string; features: string[]; justPaid: boolean; cancelled: boolean };
 }) {
   const router = useRouter();
   const [value, setValue] = useState(slug);
@@ -974,6 +1011,12 @@ function SettingsPanel({
         )}
       </Group>
 
+      <PremiumGroup siteId={siteId} premium={premium} pay={pay} />
+
+      <Group title="Second language" hint="Bilingual families? Translate your site with AI; guests switch languages with one tap.">
+        <TranslatePanel translation={translation} onChange={(t) => onTranslation(t as Customization["translation"])} />
+      </Group>
+
       <Group title="Guests">
         <Link href={`/dashboard/sites/${siteId}/guests`} className="btn btn-light w-full">
           RSVPs &amp; guestbook
@@ -985,5 +1028,55 @@ function SettingsPanel({
         </button>
       </Group>
     </>
+  );
+}
+
+const FEATURE_LABEL: Record<string, string> = {
+  ai: "AI writing assistant, theme matchmaker, translation & thank-you notes",
+  guestHelper: "“Ask us anything” guest helper",
+  password: "Password-protected site",
+  branding: "No “Made with Vow” line",
+};
+
+function PremiumGroup({ siteId, premium, pay }: { siteId: string; premium: boolean; pay: { live: boolean; amount: number; currency: string; features: string[]; justPaid: boolean; cancelled: boolean } }) {
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  if (!premium && !pay.live) return null;
+  const price = new Intl.NumberFormat("en", { style: "currency", currency: pay.currency.toUpperCase() }).format(pay.amount / 100);
+  async function upgrade() {
+    setBusy(true);
+    setErr("");
+    const res = await fetch("/api/pay/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ siteId }) }).catch(() => null);
+    const data = await res?.json().catch(() => null);
+    if (res?.ok && data?.url) return void (window.location.href = data.url);
+    setBusy(false);
+    setErr(data?.error ?? "Couldn't start the payment.");
+  }
+  return (
+    <div id="upgrade">
+      <Group title="Premium" hint={premium ? undefined : `A one-time ${price} upgrade for this wedding site. No subscription.`}>
+        {pay.justPaid && <p className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-900">Payment received. Thank you! This site is now Premium.</p>}
+        {pay.cancelled && !premium && <p className="rounded-lg bg-[#f6efe4] px-3 py-2 text-sm">Payment cancelled. You haven&apos;t been charged.</p>}
+        {premium ? (
+          <p className="text-sm">
+            <span className="mr-2 rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-900">Premium</span>
+            Everything is unlocked for this site.
+          </p>
+        ) : (
+          <>
+            <ul className="space-y-1 text-sm">
+              {pay.features.map((f) => (
+                <li key={f}>✓ {FEATURE_LABEL[f] ?? f}</li>
+              ))}
+            </ul>
+            <button type="button" className="btn w-full" disabled={busy} onClick={upgrade}>
+              {busy ? "Opening secure checkout…" : `Upgrade for ${price}`}
+            </button>
+            {err && <p className="text-xs text-red-700">{err}</p>}
+            <p className="text-xs text-stone">Secure payment by Stripe. You&apos;ll come straight back here afterwards.</p>
+          </>
+        )}
+      </Group>
+    </div>
   );
 }

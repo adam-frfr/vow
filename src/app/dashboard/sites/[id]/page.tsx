@@ -5,12 +5,16 @@ import { db } from "@/lib/db";
 import { parseContent, parseCustomization } from "@/lib/content";
 import { googleFontsHref, THEMES } from "@/lib/themes";
 import { Editor } from "./Editor";
+import { confirmSession, payConfig } from "@/lib/stripe";
 
 export const metadata: Metadata = { title: "Editor" };
 
-export default async function EditSite({ params }: { params: Promise<{ id: string }> }) {
+export default async function EditSite({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ paid?: string }> }) {
   const user = await requireUser();
   const { id } = await params;
+  const { paid } = await searchParams;
+  // Back from Stripe: confirm the payment directly (works even before the webhook is set up).
+  const justPaid = paid && paid !== "cancelled" ? await confirmSession(paid, user.id) : false;
   const site = await db.site.findFirst({
     where: { id, userId: user.id },
     include: {
@@ -19,12 +23,14 @@ export default async function EditSite({ params }: { params: Promise<{ id: strin
     },
   });
   if (!site) notFound();
+  const pay = await payConfig();
 
   return (
     <>
       <link rel="stylesheet" href={googleFontsHref(THEMES.map((t) => t.fonts.script || t.fonts.display))} precedence="default" />
       <Editor
-        site={{ id: site.id, slug: site.slug, themeId: site.themeId, published: site.published, isProtected: !!site.passwordHash }}
+        site={{ id: site.id, slug: site.slug, themeId: site.themeId, published: site.published, isProtected: !!site.passwordHash, premium: site.premium || justPaid }}
+        pay={{ ...pay, justPaid, cancelled: paid === "cancelled" }}
         initialContent={parseContent(site.content)}
         initialCustomization={parseCustomization(site.customization)}
         initialPhotos={site.photos.map((p) => ({ id: p.id, url: p.url }))}

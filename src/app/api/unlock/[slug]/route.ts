@@ -2,12 +2,12 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { rateLimit } from "@/lib/rate-limit";
+import { guard } from "@/lib/security";
 import { accessCookie, accessCookieOptions, signSiteAccess } from "@/lib/site-access";
 
 /** Guest enters the site password. */
 export async function POST(req: Request, { params }: { params: Promise<{ slug: string }> }) {
-  if (!rateLimit(req, "unlock", 10, 60_000)) {
+  if (!(await guard(req, "unlock", 10, 60_000))) {
     return NextResponse.json({ error: "Too many attempts. Please wait a minute." }, { status: 429 });
   }
   const { slug } = await params;

@@ -5,7 +5,7 @@ import { SiteHeader } from "@/components/ui/SiteHeader";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { parseContent } from "@/lib/content";
-import { DeleteRsvp, WishModeration } from "./GuestActions";
+import { DeleteRsvp, ThankYouNotes, WishModeration } from "./GuestActions";
 
 export const metadata: Metadata = { title: "Guests" };
 
@@ -115,10 +115,14 @@ export default async function Guests({ params }: { params: Promise<{ id: string 
           </table>
         </div>
 
+        <h2 className="mt-16 font-serif text-4xl">Thank-you notes</h2>
+        <p className="mb-6 mt-1 text-stone">After the wedding: a personal draft for every guest who replied, ready to copy into a card or message.</p>
+        <ThankYouNotes siteId={site.id} hasGuests={site.rsvps.length > 0} />
+
         <h2 className="mt-16 font-serif text-4xl">Guestbook</h2>
         <p className="mb-6 mt-1 text-stone">Notes guests left on your site. Hidden notes don&rsquo;t appear publicly.</p>
         <WishModeration
-          wishes={site.wishes.map((w) => ({ id: w.id, name: w.name, message: w.message, hidden: w.hidden, createdAt: w.createdAt.toISOString() }))}
+          wishes={site.wishes.map((w) => ({ id: w.id, name: w.name, message: w.message, hidden: w.hidden, flagged: w.flagged, createdAt: w.createdAt.toISOString() }))}
         />
       </main>
     </>

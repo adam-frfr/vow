@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { ThemeMatch } from "../sites/[id]/AiAssist";
 import { ThemeCard } from "@/components/ui/ThemeCard";
 import { COLLECTIONS, getTheme, THEMES, type CollectionId } from "@/lib/themes";
 
@@ -37,6 +38,14 @@ export function NewSiteForm({ initialTheme }: { initialTheme?: string }) {
         <p className="eyebrow">Step 1 of 2</p>
         <h1 className="mt-2 font-serif text-5xl">Choose your theme</h1>
         <p className="mt-2 text-stone">Don’t overthink it. You can switch themes any time without losing your words.</p>
+        <div className="mt-6 max-w-xl">
+          <ThemeMatch
+            onPick={(id) => {
+              setThemeId(id);
+              setStep(2);
+            }}
+          />
+        </div>
         <div className="mt-8 flex gap-2 overflow-x-auto pb-2">
           {[{ id: "all" as const, name: "All" }, ...COLLECTIONS].map((c) => (
             <button

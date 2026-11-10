@@ -16,7 +16,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   if (!wish) return NextResponse.json({ error: "Not found" }, { status: 404 });
   const body = z.object({ hidden: z.boolean() }).safeParse(await req.json().catch(() => null));
   if (!body.success) return NextResponse.json({ error: "Invalid input" }, { status: 400 });
-  await db.wish.update({ where: { id: wish.id }, data: { hidden: body.data.hidden } });
+  await db.wish.update({ where: { id: wish.id }, data: { hidden: body.data.hidden, ...(body.data.hidden ? {} : { flagged: false }) } });
   return NextResponse.json({ ok: true });
 }
 

@@ -18,3 +18,10 @@ export function rateLimit(req: Request, scope: string, limit: number, windowMs: 
   b.count++;
   return b.count <= limit;
 }
+
+/** Like rateLimit, but also says whether this is the first refusal in the window (log it once). */
+export function hit(req: Request, scope: string, limit: number, windowMs: number) {
+  const ok = rateLimit(req, scope, limit, windowMs);
+  const b = buckets.get(`${scope}:${clientIp(req)}`);
+  return { ok, firstDeny: !ok && b?.count === limit + 1 };
+}

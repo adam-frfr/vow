@@ -10,6 +10,7 @@ import type { Customization, InviteContent } from "@/lib/content";
 import { CARD_COLORWAYS, CARD_FINISHES, CARD_STYLES, type CardSettings } from "@/lib/stickers";
 import { getTheme, googleFontsHref } from "@/lib/themes";
 import { Chip } from "../LibraryPanel";
+import { callAi } from "../AiAssist";
 
 export function CardStudio({
   siteId,
@@ -29,6 +30,17 @@ export function CardStudio({
   const [origin, setOrigin] = useState("");
   const [saved, setSaved] = useState(true);
   const [artKind, setArtKind] = useState<"frame" | "bouquet">("frame");
+  const [aiBusy, setAiBusy] = useState(false);
+  const [aiErr, setAiErr] = useState("");
+  async function suggest() {
+    setAiBusy(true);
+    setAiErr("");
+    const r = await callAi<Pick<CardSettings, "top" | "invite" | "extra" | "reply">>("/api/ai/card", { siteId, tone: "warm" });
+    setAiBusy(false);
+    if (r.error || !r.data) return setAiErr(r.error ?? "Nothing came back.");
+    const { top, invite, extra, reply } = r.data;
+    set({ ...(top && { top }), ...(invite && { invite }), ...(extra && { extra }), ...(reply && { reply }) });
+  }
   useEffect(() => setOrigin(window.location.origin), []);
   const r = useMemo(() => resolveCard(theme, content, cz), [theme, content, cz]);
   const card = cz.card ?? {};
@@ -163,7 +175,13 @@ export function CardStudio({
           ) : null}
 
           <div className="space-y-3">
-            <p className="label !mb-0">Wording</p>
+            <div className="flex items-center justify-between">
+              <p className="label !mb-0">Wording</p>
+              <button type="button" disabled={aiBusy} onClick={suggest} className="text-xs text-[#7a5a2a] hover:underline">
+                ✦ {aiBusy ? "Writing…" : "Suggest wording with AI"}
+              </button>
+            </div>
+            {aiErr && <p className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-800">{aiErr}</p>}
             {text("top", "Opening line", r.lines.top)}
             {text("invite", "Invitation line", r.lines.invite)}
             {text("venue", "Venue", r.lines.venue)}

@@ -6,6 +6,7 @@ import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { formatDate, parseContent, parseCustomization } from "@/lib/content";
 import { getTheme, img } from "@/lib/themes";
+import { getSetting } from "@/lib/settings";
 
 export const metadata: Metadata = { title: "My sites" };
 
@@ -16,17 +17,24 @@ export default async function Dashboard() {
     orderBy: { updatedAt: "desc" },
     include: { _count: { select: { rsvps: true } }, rsvps: { select: { attending: true, guests: true } } },
   });
+  const announcement = await getSetting("site.announcement");
 
   return (
     <>
       <SiteHeader />
       <main className="mx-auto max-w-6xl px-5 py-14">
+        {announcement && <div className="mb-8 rounded-2xl bg-[#f3ece0] px-5 py-3 text-sm">{announcement}</div>}
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="eyebrow">Welcome{user.name ? `, ${user.name}` : ""}</p>
             <h1 className="mt-2 font-serif text-5xl">Your wedding sites</h1>
           </div>
           <div className="flex gap-2">
+            {user.isAdmin && (
+              <Link href="/admin" className="btn btn-light">
+                Admin
+              </Link>
+            )}
             <form action="/api/auth/logout" method="post">
               <button className="btn btn-light">Log out</button>
             </form>

@@ -174,6 +174,15 @@ export function DecorPanel({ themeId, cz, setCz }: { themeId: string; cz: Custom
             <span className="block text-xs text-stone">Florals spread onto the page like wet watercolour.</span>
           </span>
         </label>
+        <Segmented
+          label="Art finish"
+          options={{ painted: "Painted", white: "White ink", gold: "Gold foil", ink: "Black ink" }}
+          value={d.finish ?? effective.decor.finish ?? "painted"}
+          onChange={(v) => setD({ finish: v })}
+        />
+        <p className="-mt-1 text-xs text-stone">
+          {dark ? "White ink and gold foil turn the florals into fine line art on your dark background." : "Black ink and gold foil turn the florals into fine line art, like letterpress."}
+        </p>
         <p className="label !mb-0">Around your names</p>
         <FloralPicker kinds={["wreath", "frame", "bouquet"]} value={d.heroFloral} effective={effective.decor.heroFloral} onChange={(v) => setD({ heroFloral: v })} dark={dark} />
         <p className="label !mb-0 pt-2">Corner sprays</p>

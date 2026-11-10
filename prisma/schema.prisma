@@ -15,7 +15,77 @@ model User {
   name         String?
   passwordHash String
   createdAt    DateTime @default(now())
+  /// Can open /admin. Also granted by ADMIN_EMAILS in .env.
+  isAdmin      Boolean  @default(false)
+  /// Blocked accounts cannot sign in; their published sites go offline.
+  blocked      Boolean  @default(false)
+  lastLoginAt  DateTime?
   sites        Site[]
+}
+
+/// Every sign-in attempt (for the admin's activity and abuse views).
+model LoginEvent {
+  id        String   @id @default(cuid())
+  userId    String?
+  email     String
+  ok        Boolean
+  /// Salted hash of the IP: enough to spot abuse, without storing the address.
+  ipHash    String
+  userAgent String   @default("")
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([ipHash])
+}
+
+/// Abuse signals: rate-limit hits, honeypot catches, AI-flagged spam, blocked logins.
+model SecurityEvent {
+  id        String   @id @default(cuid())
+  kind      String
+  scope     String   @default("")
+  ipHash    String
+  siteId    String?
+  detail    String   @default("")
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([ipHash])
+}
+
+/// Admin-controlled settings (secrets are stored encrypted).
+model Setting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
+model AiUsage {
+  id        String   @id @default(cuid())
+  userId    String?
+  siteId    String?
+  feature   String
+  tokens    Int      @default(0)
+  ok        Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([userId])
+}
+
+model Payment {
+  id        String   @id @default(cuid())
+  siteId    String
+  userId    String
+  provider  String   @default("stripe")
+  /// Checkout session id from the provider.
+  sessionId String   @unique
+  amount    Int
+  currency  String
+  status    String   @default("pending")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([siteId])
 }
 
 model Site {
@@ -31,6 +101,8 @@ model Site {
   published     Boolean  @default(false)
   /// bcrypt hash; when set, guests must enter the password to view the site
   passwordHash  String?
+  /// Unlocked by payment (or granted by an admin).
+  premium       Boolean  @default(false)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   photos        Photo[]
@@ -48,6 +120,9 @@ model Wish {
   name      String
   message   String
   hidden    Boolean  @default(false)
+  /// Hidden automatically by the spam filter (the couple/admin can restore it).
+  flagged   Boolean  @default(false)
+  ipHash    String   @default("")
   createdAt DateTime @default(now())
 
   @@index([siteId])

@@ -1,24 +1,53 @@
 import "server-only";
 import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { db } from "./db";
 import { SESSION_COOKIE, verifySession } from "./session";
 
-export async function getUserId() {
+/** Emails listed in ADMIN_EMAILS (comma-separated) are always admins. */
+export function isAdminEmail(email: string) {
+  return (process.env.ADMIN_EMAILS ?? "")
+    .split(",")
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean)
+    .includes(email.toLowerCase());
+}
+
+async function sessionUser() {
   const store = await cookies();
-  return verifySession(store.get(SESSION_COOKIE)?.value);
+  const id = await verifySession(store.get(SESSION_COOKIE)?.value);
+  if (!id) return null;
+  const u = await db.user.findUnique({ where: { id }, select: { id: true, email: true, name: true, isAdmin: true, blocked: true } });
+  if (!u || u.blocked) return null;
+  return { ...u, isAdmin: u.isAdmin || isAdminEmail(u.email) };
+}
+
+export async function getUserId() {
+  return (await sessionUser())?.id ?? null;
 }
 
 export async function getUser() {
-  const id = await getUserId();
-  if (!id) return null;
-  return db.user.findUnique({ where: { id }, select: { id: true, email: true, name: true } });
+  return sessionUser();
 }
 
 export async function requireUser() {
   const user = await getUser();
   if (!user) redirect("/login");
   return user;
+}
+
+/** Admin pages 404 for everyone else (so the panel's existence isn't advertised). */
+export async function requireAdmin() {
+  const user = await getUser();
+  if (!user) redirect("/login?next=/admin");
+  if (!user.isAdmin) notFound();
+  return user;
+}
+
+/** For admin API routes: the admin user, or null. */
+export async function adminOrNull() {
+  const user = await getUser();
+  return user?.isAdmin ? user : null;
 }
 
 /** Returns the site only if it belongs to the signed-in user. */

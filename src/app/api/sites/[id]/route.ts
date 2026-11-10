@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { needsPremium } from "@/lib/stripe";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { getOwnedSite } from "@/lib/auth";
@@ -25,6 +26,10 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const parsed = patchSchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid input" }, { status: 400 });
   const body = parsed.data;
+
+  if (typeof body.password === "string" && (await needsPremium("password", site))) {
+    return NextResponse.json({ error: "Password protection is part of Premium. Upgrade this site to use it.", code: "premium" }, { status: 402 });
+  }
 
   let slug: string | undefined;
   if (body.slug !== undefined && body.slug !== site.slug) {

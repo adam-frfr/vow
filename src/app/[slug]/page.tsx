@@ -9,6 +9,10 @@ import { getUserId } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { formatDate, parseContent, parseCustomization } from "@/lib/content";
 import { hasSiteAccess } from "@/lib/site-access";
+import { helperAvailable } from "@/lib/helper";
+import { AskWidget } from "@/components/invite/AskWidget";
+import type { InviteContent } from "@/lib/content";
+import Link from "next/link";
 import { getTheme, googleFontsHref, img } from "@/lib/themes";
 
 const load = cache(async (slug: string) =>
@@ -17,6 +21,7 @@ const load = cache(async (slug: string) =>
     include: {
       photos: { orderBy: { position: "asc" } },
       wishes: { where: { hidden: false }, orderBy: { createdAt: "desc" }, take: 60 },
+      user: { select: { blocked: true } },
     },
   }),
 );
@@ -37,16 +42,22 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   };
 }
 
-export default async function PublicInvite({ params }: { params: Promise<{ slug: string }> }) {
+export default async function PublicInvite({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<{ lang?: string }> }) {
   const { slug } = await params;
+  const { lang } = await searchParams;
   const site = await load(slug);
-  if (!site) notFound();
+  // Sites of suspended accounts go offline.
+  if (!site || site.user.blocked) notFound();
   const userId = await getUserId();
   // Unpublished sites are only visible to their owner.
   if (!site.published && userId !== site.userId) notFound();
 
-  const content = parseContent(site.content);
+  const original = parseContent(site.content);
   const cz = parseCustomization(site.customization);
+  // Second language (AI-translated by the couple): guests switch with ?lang=.
+  const tr = cz.translation;
+  const translated = !!tr && lang === tr.lang;
+  const content = translated ? withTranslation(original, tr.fields) : original;
 
   if (!(await hasSiteAccess(site, userId))) {
     const theme = getTheme(site.themeId);
@@ -84,7 +95,44 @@ export default async function PublicInvite({ params }: { params: Promise<{ slug:
         wishes={site.wishes.map((w) => ({ id: w.id, name: w.name, message: w.message, createdAt: w.createdAt.toISOString() }))}
         mode={site.published ? "live" : "preview"}
         slug={site.slug}
+        hideBranding={site.premium}
       />
+      {tr && <LanguageSwitch slug={site.slug} lang={tr.lang} active={translated} />}
+      {site.published && (await helperAvailable(site)) && <AskWidget slug={site.slug} names={`${original.partner1} & ${original.partner2}`} />}
     </>
+  );
+}
+
+type Fields = NonNullable<ReturnType<typeof parseCustomization>["translation"]>["fields"];
+
+/** Swap in translated wording, keeping anything the translation left empty. */
+function withTranslation(c: InviteContent, f: Fields): InviteContent {
+  const or = (t: string, o: string) => t || o;
+  return {
+    ...c,
+    headline: or(f.headline, c.headline),
+    tagline: or(f.tagline, c.tagline),
+    story: { body: or(f.story, c.story.body) },
+    travel: { body: or(f.travel, c.travel.body) },
+    dressCode: { body: or(f.dressCode, c.dressCode.body) },
+    registry: { ...c.registry, body: or(f.registry, c.registry.body) },
+    rsvp: { ...c.rsvp, body: or(f.rsvp, c.rsvp.body) },
+    wishes: { body: or(f.wishes, c.wishes.body) },
+    faq: { items: f.faq.length ? f.faq.map((x, i) => ({ q: or(x.q, c.faq.items[i]?.q ?? ""), a: or(x.a, c.faq.items[i]?.a ?? "") })) : c.faq.items },
+    titles: { ...c.titles, ...f.titles },
+  };
+}
+
+function LanguageSwitch({ slug, lang, active }: { slug: string; lang: string; active: boolean }) {
+  const pill = "rounded-full px-3 py-1.5 transition";
+  return (
+    <nav aria-label="Language" className="fixed right-3 top-3 z-[60] flex gap-0.5 rounded-full bg-white/90 p-1 text-xs shadow-lg backdrop-blur">
+      <Link href={`/${slug}`} className={`${pill} ${!active ? "bg-[#1c1917] text-white" : "text-[#1c1917]"}`}>
+        English
+      </Link>
+      <Link href={`/${slug}?lang=${encodeURIComponent(lang)}`} className={`${pill} ${active ? "bg-[#1c1917] text-white" : "text-[#1c1917]"}`}>
+        {lang}
+      </Link>
+    </nav>
   );
 }

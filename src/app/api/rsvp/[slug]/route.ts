@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { parseContent } from "@/lib/content";
-import { rateLimit } from "@/lib/rate-limit";
+import { guard } from "@/lib/security";
 import { getUserId } from "@/lib/auth";
 import { hasSiteAccess } from "@/lib/site-access";
 
@@ -17,12 +17,12 @@ const schema = z.object({
 });
 
 export async function POST(req: Request, { params }: { params: Promise<{ slug: string }> }) {
-  if (!rateLimit(req, "rsvp", 20, 60_000)) {
+  if (!(await guard(req, "rsvp", 20, 60_000))) {
     return NextResponse.json({ error: "Too many responses. Please try again shortly." }, { status: 429 });
   }
   const { slug } = await params;
-  const site = await db.site.findUnique({ where: { slug } });
-  if (!site || !site.published) return NextResponse.json({ error: "This invitation isn't accepting RSVPs." }, { status: 404 });
+  const site = await db.site.findUnique({ where: { slug }, include: { user: { select: { blocked: true } } } });
+  if (!site || !site.published || site.user.blocked) return NextResponse.json({ error: "This invitation isn't accepting RSVPs." }, { status: 404 });
   if (!(await hasSiteAccess(site, await getUserId()))) return NextResponse.json({ error: "This site is private." }, { status: 403 });
 
   const parsed = schema.safeParse(await req.json().catch(() => null));

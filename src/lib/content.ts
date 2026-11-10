@@ -62,6 +62,8 @@ export const contentSchema = z.object({
     .default({ body: "", links: [] }),
   faq: z.object({ items: z.array(z.object({ q: str(200), a: str(1000) })).max(30) }).default({ items: [] }),
   wishes: z.object({ body: str(300) }).default({ body: "" }),
+  /** "Ask us anything": an AI helper on the live site that answers from this content only. */
+  ask: z.object({ enabled: z.boolean().default(false) }).default({ enabled: false }),
   rsvp: z
     .object({
       deadline: str(20),
@@ -94,6 +96,24 @@ export const customizationSchema = z.object({
   effects: effectsSchema.optional(),
   /** The matching printed invitation. */
   card: cardSchema.optional(),
+  /** Second language for the live site (guests switch with a button). */
+  translation: z
+    .object({
+      lang: z.string().max(40),
+      fields: z.object({
+        headline: z.string().max(120),
+        tagline: z.string().max(200),
+        story: z.string().max(4000),
+        travel: z.string().max(3000),
+        dressCode: z.string().max(1000),
+        registry: z.string().max(1000),
+        rsvp: z.string().max(500),
+        wishes: z.string().max(300),
+        faq: z.array(z.object({ q: z.string().max(200), a: z.string().max(1000) })).max(30),
+        titles: z.record(z.string(), z.string().max(80)),
+      }),
+    })
+    .optional(),
 });
 export type Customization = z.infer<typeof customizationSchema>;
 
