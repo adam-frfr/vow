@@ -2,6 +2,7 @@
 "use client";
 
 import { floralUrl, getCutout, getFloral, type Floral } from "@/lib/assets";
+import { FINISH_FILTERS } from "@/lib/decor";
 import type { Ctx } from "./ctx";
 import { InkBloom } from "./motion/InkBloom";
 import { ScrollSequence } from "./motion/ScrollSequence";
@@ -24,6 +25,8 @@ export function FloralArt({
   delay?: number;
   style?: React.CSSProperties;
 }) {
+  const filter = ctx.decor.finish ? FINISH_FILTERS[ctx.decor.finish] : undefined;
+  if (filter) style = { ...style, filter, opacity: 0.92 };
   if (ctx.decor.ink) {
     return <InkBloom floral={floral} origin={origin} auto={auto} delay={delay} className={className} style={style} />;
   }
@@ -37,7 +40,7 @@ export function FloralArt({
 /** Painted corner sprays framing the top of the site. */
 export function DecorCorners({ ctx }: { ctx: Ctx }) {
   const fl = getFloral(ctx.decor.corner);
-  if (!fl || (ctx.dark && fl.tone === "light")) return null;
+  if (!fl || (ctx.dark && fl.tone === "light" && !ctx.decor.finish)) return null;
   return (
     <div className="dc-corners" aria-hidden>
       <FloralArt floral={fl} ctx={ctx} className="dc-corner dc-corner--tr" origin="tr" auto />
@@ -49,13 +52,13 @@ export function DecorCorners({ ctx }: { ctx: Ctx }) {
 /** Wreath/frame/bouquet behind the couple's names (templates place this). */
 export function HeroFloral({ ctx, className = "" }: { ctx: Ctx; className?: string }) {
   const fl = getFloral(ctx.decor.heroFloral);
-  if (!fl || (ctx.dark && fl.tone === "light")) return null;
+  if (!fl || (ctx.dark && fl.tone === "light" && !ctx.decor.finish)) return null;
   return <FloralArt floral={fl} ctx={ctx} className={`dc-hero ${className}`} origin="tr" auto delay={200} />;
 }
 
 export function DecorDivider({ ctx, index }: { ctx: Ctx; index: number }) {
   const fl = getFloral(ctx.decor.divider);
-  if (!fl || (ctx.dark && fl.tone === "light")) return null;
+  if (!fl || (ctx.dark && fl.tone === "light" && !ctx.decor.finish)) return null;
   return (
     <div className="dc-divider" aria-hidden>
       <FloralArt floral={fl} ctx={ctx} origin={index % 2 ? "tl" : "tr"} />

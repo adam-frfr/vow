@@ -1,0 +1,59 @@
+/* FINE LINE: a letterpress suite. Art printed as line work; cards with hairline rules. */
+.t-fl {
+  --hair: color-mix(in srgb, var(--text) 26%, transparent);
+  --card: color-mix(in srgb, var(--bg) 86%, var(--text));
+  background: var(--bg);
+  text-align: center;
+}
+.inv[data-tone="light"] .t-fl { --card: color-mix(in srgb, var(--bg) 55%, #fff); }
+
+.fl-hero { min-height: var(--hero-h); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: clamp(2.5rem, 7cqi, 4rem) 1.25rem 2rem; }
+.fl-suite { position: relative; width: min(100%, 470px); }
+.fl-card { position: relative; aspect-ratio: 5 / 7; width: 100%; background: var(--card); box-shadow: 0 1px 2px rgba(0, 0, 0, .1), 0 40px 70px -40px rgba(0, 0, 0, .55); }
+.fl-card--back { position: absolute; inset: 0; transform: translate(-9%, -5%) rotate(-5deg); background: var(--accent); color: var(--on-accent); display: grid; place-items: end start; padding: 1.4rem 1.6rem; }
+.fl-card--back .s { font-size: 2.2rem; opacity: .85; }
+@container inv (max-width: 560px) { .fl-card--back { display: none; } }
+.fl-card--main { container-type: inline-size; overflow: hidden; }
+.fl-wreath { position: absolute; left: 50%; top: 47%; width: 96%; translate: -50% -50%; pointer-events: none; }
+.fl-card-text { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2.4cqw; padding: 0 22cqw; }
+.fl-small { font-style: italic; font-size: max(.72rem, 3.2cqw); color: var(--muted); letter-spacing: .02em; line-height: 1.55; }
+.t-fl .fl-small { font-family: var(--font-display), serif; }
+.fl-names { display: flex; flex-direction: column; align-items: center; line-height: 1.02; margin: 1cqw 0; }
+.fl-names .s { font-size: max(1.8rem, 9.6cqw); color: var(--text); }
+.fl-and { font-family: var(--font-display), serif; font-style: italic; font-size: max(.75rem, 3.3cqw); color: var(--muted); margin: .4cqw 0; }
+.fl-date { display: flex; align-items: center; gap: 2.2cqw; font-family: var(--font-display), serif; font-size: max(.72rem, 3.3cqw); letter-spacing: .24em; text-transform: uppercase; margin-top: 1.4cqw; }
+.fl-date i { width: 1px; height: 4.6cqw; background: currentColor; opacity: .5; }
+.fl-venue { font-family: var(--font-display), serif; font-size: max(.7rem, 3.1cqw); letter-spacing: .22em; text-transform: uppercase; }
+.fl-sprig { position: absolute; right: -16%; top: -12%; width: 46%; rotate: 18deg; pointer-events: none; }
+@container inv (max-width: 560px) { .fl-sprig { right: -6%; top: -9%; width: 38%; } }
+.fl-count { justify-content: center; margin-top: 2.4rem; gap: 2rem; }
+.fl-count div { background: none; border: none; }
+.fl-nav { display: flex; flex-wrap: wrap; justify-content: center; gap: .3rem 1.4rem; margin-top: 1.6rem; font-size: .64rem; letter-spacing: .26em; text-transform: uppercase; }
+.fl-nav a { color: var(--muted); text-decoration: none; }
+.fl-nav a:hover { color: var(--accent); }
+
+.fl-sec { padding: clamp(2rem, 6cqi, 3.4rem) 1.25rem; }
+.fl-panel { position: relative; max-width: 760px; margin: 0 auto; border: 1px solid var(--hair); outline: 1px solid var(--hair); outline-offset: 6px; padding: clamp(2.4rem, 7cqi, 4rem) clamp(1.4rem, 6cqi, 3.6rem); }
+.fl-sec--alt .fl-panel { background: var(--card); border-color: transparent; }
+.fl-rule { width: min(300px, 62%); margin: 0 auto 1rem; }
+.fl-line { display: block; width: 1px; height: 46px; margin: 0 auto 1rem; background: var(--hair); }
+.fl-no { font-family: var(--font-display), serif; font-size: .7rem; letter-spacing: .3em; color: var(--muted); }
+.fl-h { font-size: clamp(2.6rem, 7.4cqi, 3.8rem); margin: .2rem 0 1.6rem; color: var(--text); }
+.fl-prose, .fl-panel .blk-prose { max-width: 580px; margin: 0 auto; font-size: 1.04rem; line-height: 1.9; }
+.fl-events { display: grid; gap: 2rem; }
+@container inv (min-width: 680px) { .fl-events { grid-template-columns: 1fr 1fr; } }
+.fl-event-venue { font-size: 1.7rem; margin: .5rem 0 .2rem; }
+.fl-link { display: inline-block; margin-top: .9rem; font-size: .66rem; letter-spacing: .24em; text-transform: uppercase; color: var(--text) !important; text-decoration: none; border-bottom: 1px solid var(--hair); }
+.fl-map { margin-top: 1.6rem; filter: grayscale(.4); }
+.fl-sched { list-style: none; padding: 0; margin: 0 auto; max-width: 480px; display: grid; gap: 1.4rem; }
+.fl-sched li { display: grid; gap: .15rem; }
+.fl-sched-time { font-size: .7rem; letter-spacing: .28em; text-transform: uppercase; color: var(--muted); }
+.fl-sched .d { font-size: 1.5rem; }
+.fl-gallery { display: grid; grid-template-columns: repeat(2, 1fr); gap: .6rem; }
+@container inv (min-width: 760px) { .fl-gallery { grid-template-columns: repeat(3, 1fr); } }
+.fl-gallery img { aspect-ratio: 4 / 5; object-fit: cover; width: 100%; filter: grayscale(.25); }
+
+.fl-foot { padding: 3rem 1rem 1rem; }
+.fl-foot-mark { position: relative; width: 180px; margin: 0 auto; display: grid; place-items: center; }
+.fl-foot-wreath { grid-area: 1 / 1; width: 100%; }
+.fl-mono { grid-area: 1 / 1; font-size: 2.4rem; }

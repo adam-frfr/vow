@@ -15,7 +15,17 @@ export const decorSchema = z.object({
   cutout: z.string().max(60).optional(), // scroll-scrubbed footage cut-out
   cutoutAt: z.enum(["intro", "story", "rsvp"]).optional(),
   ink: z.boolean().optional(), // florals bloom in with ink on scroll
+  /** Print finish for painted art: line work in white ink, gold foil or black ink. */
+  finish: z.enum(["painted", "white", "gold", "ink"]).optional(),
 });
+
+/** CSS filters that turn painted art into a print finish (shared with the invitation card). */
+export const FINISH_FILTERS = {
+  painted: undefined,
+  white: "brightness(0) invert(1)",
+  gold: "brightness(0) invert(66%) sepia(60%) saturate(400%) brightness(84%)",
+  ink: "brightness(0)",
+} as const;
 export type Decor = z.infer<typeof decorSchema>;
 
 export const styleSchema = z.object({
@@ -100,7 +110,7 @@ export function familyOf(hex: string): Family {
 /* ── Defaults per theme ─────────────────────────────────────────── */
 
 /** Which design architectures welcome painted florals / footage cut-outs. */
-const FLORAL_FRIENDLY: TemplateId[] = ["classic", "grand", "stationery", "botanical", "letter", "storybook", "scrapbook", "split", "atelier", "bloom"];
+const FLORAL_FRIENDLY: TemplateId[] = ["fineline", "herbarium", "wash", "classic", "grand", "stationery", "botanical", "letter", "storybook", "scrapbook", "split", "atelier", "bloom"];
 const CUTOUT_FRIENDLY: TemplateId[] = ["classic", "grand", "cinematic", "letter", "split", "stationery", "storybook", "atelier", "candlelit", "bloom", "editorial", "voyage"];
 
 /** Designs whose own gallery accepts the photo-frame style. */

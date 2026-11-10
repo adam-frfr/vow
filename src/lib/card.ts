@@ -4,7 +4,7 @@
  */
 import { ALL_FLORALS, getFloral, type Floral } from "./assets";
 import { formalDate, type Customization, type InviteContent } from "./content";
-import { familyOf, floralFamilies, luminance, resolveDecorStyle } from "./decor";
+import { familyOf, FINISH_FILTERS, floralFamilies, luminance, resolveDecorStyle } from "./decor";
 import type { CardSettings } from "./stickers";
 import { templateOf, TEMPLATE_IDS, type TemplateId, type Theme } from "./themes";
 
@@ -69,7 +69,7 @@ export function resolveCard(theme: Theme, c: InviteContent, cz: Customization = 
     accent = `color-mix(in srgb, ${accent0} 45%, ${fg})`;
   }
   const darkCard = colorway === "inverse" ? !themeDark : colorway === "paper" ? false : themeDark;
-  const finish = s.finish ?? (darkCard && art?.tone === "light" ? "white" : colorway === "inverse" ? "white" : "painted");
+  const finish = s.finish ?? (decor.finish && decor.finish !== "painted" ? decor.finish : undefined) ?? (darkCard && art?.tone === "light" ? "white" : colorway === "inverse" ? "white" : "painted");
 
   const fd = formalDate(c.date);
   const [y, m, d] = /^\d{4}-\d{2}-\d{2}$/.test(c.date) ? c.date.split("-") : ["", "", ""];
@@ -112,9 +112,4 @@ export function resolveCard(theme: Theme, c: InviteContent, cz: Customization = 
 }
 
 /** CSS filter that turns painted art into a print finish. */
-export const FINISH_FILTER: Record<ResolvedCard["finish"], string | undefined> = {
-  painted: undefined,
-  white: "brightness(0) invert(1)",
-  gold: "brightness(0) invert(66%) sepia(60%) saturate(400%) brightness(84%)",
-  ink: "brightness(0)",
-};
+export const FINISH_FILTER: Record<ResolvedCard["finish"], string | undefined> = FINISH_FILTERS;

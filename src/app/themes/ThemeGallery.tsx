@@ -41,20 +41,17 @@ export function ThemeGallery({ initial, linkPrefix = "/themes/" }: { initial?: s
             </div>
             <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search: gold, beach, Klimt…" className="field max-w-xs !rounded-full" />
           </div>
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 [scrollbar-width:none]">
+          <label className="flex items-center gap-2">
             <span className="shrink-0 text-xs uppercase tracking-[0.18em] text-stone">Site design</span>
-            {[{ id: "all" as const, name: "Any" }, ...TEMPLATES].map((t) => (
-              <button
-                key={t.id}
-                onClick={() => setDesign(t.id)}
-                className={`shrink-0 rounded-full border px-3 py-1 text-xs transition ${
-                  design === t.id ? "border-brand bg-brand text-white" : "border-line bg-white hover:border-stone"
-                }`}
-              >
-                {t.name}
-              </button>
-            ))}
-          </div>
+            <select value={design} onChange={(e) => setDesign(e.target.value as TemplateId | "all")} className="field max-w-xs !rounded-full !py-1.5 text-sm">
+              <option value="all">Any design ({TEMPLATES.length})</option>
+              {TEMPLATES.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name}
+                </option>
+              ))}
+            </select>
+          </label>
         </div>
       </div>
 

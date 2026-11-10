@@ -5,7 +5,7 @@ import { CardBack, CardFront } from "@/components/card/InvitationCard";
 import { InviteSite } from "@/components/invite/InviteSite";
 import { resolveCard } from "@/lib/card";
 import { SAMPLE_WISHES, sampleContent } from "@/lib/content";
-import { COLLECTIONS, isThemeId, getTheme, TEMPLATES, templateOf, THEMES } from "@/lib/themes";
+import { COLLECTIONS, isThemeId, getTheme, TEMPLATE_IDS, TEMPLATES, templateOf, THEMES, type TemplateId } from "@/lib/themes";
 
 export function generateStaticParams() {
   return THEMES.map((t) => ({ id: t.id }));
@@ -16,8 +16,10 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   return { title: `${getTheme(id).name} theme` };
 }
 
-export default async function ThemeDemo({ params }: { params: Promise<{ id: string }> }) {
+export default async function ThemeDemo({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ design?: string }> }) {
   const { id } = await params;
+  const { design } = await searchParams;
+  const forced = design && (TEMPLATE_IDS as string[]).includes(design) ? (design as TemplateId) : undefined;
   if (!isThemeId(id)) notFound();
   const theme = getTheme(id);
   const i = THEMES.findIndex((t) => t.id === id);
@@ -35,7 +37,7 @@ export default async function ThemeDemo({ params }: { params: Promise<{ id: stri
             <div className="hidden min-w-0 sm:block">
               <div className="truncate font-serif text-xl leading-none">{theme.name}</div>
               <div className="text-xs text-stone">
-                {COLLECTIONS.find((c) => c.id === theme.collection)?.name} · {TEMPLATES.find((t) => t.id === templateOf(theme))?.name} design
+                {COLLECTIONS.find((c) => c.id === theme.collection)?.name} · {TEMPLATES.find((t) => t.id === (forced ?? templateOf(theme)))?.name} design
               </div>
             </div>
           </div>
@@ -52,7 +54,7 @@ export default async function ThemeDemo({ params }: { params: Promise<{ id: stri
           </div>
         </div>
       </div>
-      <InviteSite themeId={theme.id} content={sampleContent()} wishes={SAMPLE_WISHES} mode="demo" />
+      <InviteSite themeId={theme.id} content={sampleContent()} wishes={SAMPLE_WISHES} mode="demo" template={forced} />
       <MatchingCard themeId={theme.id} />
     </>
   );

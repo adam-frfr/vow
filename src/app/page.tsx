@@ -9,11 +9,16 @@ import { COLLECTIONS, getTheme, googleFontsHref, TEMPLATES, templateOf, THEMES }
 import { BloomAside, CandleDemo, HeroFlorals } from "./LandingMotion";
 
 const FAN = ["atelier-peony", "candlelit-noir", "great-wave"];
+/** A dozen designs that show the range; the rest are one click away. */
+const SHOWCASE = ["menu", "passport", "fineline", "vinyl", "timeline", "herbarium", "deco", "ticket", "gallery", "washi", "candlelit", "bento"] as const;
 
 const FEATURES: [string, string][] = [
   ["Scroll-animated themes", "Real footage that moves as guests scroll: a candle lights, a flower opens, a match strikes."],
   ["Painted florals", "Hand-painted watercolour florals that bloom onto the page like wet ink. Pick your own."],
-  ["18 site designs", "A newspaper, a museum, a boarding pass, a film premiere, a love letter… switch any time."],
+  [`${TEMPLATES.length} site designs`, "A dinner menu, a passport, a vinyl record, a museum, a love letter… switch any time."],
+  ["A writing assistant", "Stuck on your story or FAQ? AI drafts it in your voice from your details, never inventing facts. You edit every word."],
+  ["A helper for guests", "Guests ask “is there parking?” and get an answer from your own site, any time of night."],
+  ["Matching printed invitation", "Every theme comes with a printable 5×7 card in the same art and type, with a QR code to your site."],
   ["Every word is yours", "Story, schedule, wedding party, travel, registry, FAQ: reorder, rename or hide any section."],
   ["RSVPs & meal choices", "Guests reply in seconds; you see headcount, meals and notes, and export to a spreadsheet."],
   ["Guestbook", "Friends leave notes on your site. You can hide any of them."],
@@ -23,7 +28,9 @@ const FEATURES: [string, string][] = [
 
 export default function Home() {
   const fan = FAN.map(getTheme);
-  const showcase = TEMPLATES.map((tpl) => ({ tpl, theme: THEMES.find((t) => templateOf(t) === tpl.id)! })).filter((x) => x.theme);
+  const showcase = SHOWCASE.map((id) => TEMPLATES.find((t) => t.id === id)!)
+    .map((tpl) => ({ tpl, theme: THEMES.find((t) => templateOf(t) === tpl.id)! }))
+    .filter((x) => x.theme);
   const fonts = [...new Set(THEMES.slice(0, 40).map((t) => t.fonts.script || t.fonts.display))];
   return (
     <>
@@ -94,6 +101,9 @@ export default function Home() {
             </Link>
           ))}
         </div>
+        <p className="lp-more">
+          <Link href="/themes">See all {TEMPLATES.length} designs and {THEMES.length} themes →</Link>
+        </p>
       </section>
 
       <section className="lp-florals">

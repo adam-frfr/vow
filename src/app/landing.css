@@ -73,3 +73,6 @@
 .lp-steps li p { color: var(--color-stone); margin-top: .4rem; }
 .lp-foot { border-top: 1px solid #e4ddd1; padding: 2.6rem 1.25rem; text-align: center; font-size: .78rem; color: var(--color-stone); }
 .lp-foot p { margin-top: .5rem; }
+
+.lp-more { text-align: center; margin-top: 2.4rem; }
+.lp-more a { font-size: .95rem; text-decoration: underline; text-underline-offset: 4px; }

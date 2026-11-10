@@ -1,0 +1,26 @@
+/* Shared pieces for the "more" designs; each design restyles them under its own root. */
+.kx-pic { width: 100%; height: 100%; }
+.kx-pic--photo { object-fit: cover; }
+.kx-pic--art { object-fit: contain; }
+.kx-nav { display: flex; flex-wrap: wrap; justify-content: center; gap: .35rem 1.3rem; font-size: .68rem; letter-spacing: .2em; text-transform: uppercase; }
+.kx-nav a { text-decoration: none; color: inherit; }
+.kx-nav-mark { color: var(--accent); margin-right: .35rem; }
+.kx-prose { font-size: 1.04rem; line-height: 1.85; }
+.kx-prose p + p { margin-top: 1em; }
+.kx-events { display: grid; gap: 1.6rem; }
+@container inv (min-width: 680px) { .kx-events { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); } }
+.kx-event-k { color: var(--accent); }
+.kx-event-time { font-size: 1.9rem; margin: .25rem 0; }
+.kx-event-venue { font-weight: 500; }
+.kx-link { display: inline-block; margin-top: .8rem; margin-right: 1.2rem; font-size: .66rem; letter-spacing: .22em; text-transform: uppercase; color: var(--accent) !important; text-decoration: none; border-bottom: 1px solid currentColor; padding-bottom: 2px; }
+.kx-cal { margin-top: 1.6rem; }
+.kx-map { margin-top: 1.4rem; }
+.kx-gallery { display: grid; grid-template-columns: repeat(2, 1fr); gap: .7rem; }
+@container inv (min-width: 760px) { .kx-gallery { grid-template-columns: repeat(3, 1fr); } }
+.kx-gallery img { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; }
+.kx-gallery figure { margin: 0; }
+.kx-gallery figcaption { font-size: .7rem; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); padding-top: .4rem; }
+
+/* Let grid/flex children shrink below their content on phones (long words, embeds). */
+:is(.t-menu, .t-prog, .t-rc, .t-tg, .t-tk, .t-wl, .t-stack, .t-slides, .t-tl, .t-ix, .t-bento, .t-mq, .t-booth, .t-lb, .t-dp, .t-cv, .t-pn, .t-clg, .t-psp, .t-cal, .t-vnl, .t-bk, .t-pst, .t-tag, .t-il, .t-deco, .t-crest, .t-arbor, .t-rb, .t-cameo, .t-qt, .t-wsh, .t-halo, .t-dg, .t-om, .t-vs, .t-fold, .t-spec, .t-fc, .t-zn, .t-sg, .t-ec, .t-pl, .t-jr, .t-ht, .t-nb, .t-cf) :is(section, header, article, div) { min-width: 0; }
+:is(.t-menu, .t-prog, .t-rc, .t-tg, .t-tk, .t-wl, .t-stack, .t-slides, .t-tl, .t-ix, .t-bento, .t-mq, .t-booth, .t-lb, .t-dp, .t-cv, .t-pn, .t-clg, .t-psp, .t-cal, .t-vnl, .t-bk, .t-pst, .t-tag, .t-il, .t-deco, .t-crest, .t-arbor, .t-rb, .t-cameo, .t-qt, .t-wsh, .t-halo, .t-dg, .t-om, .t-vs, .t-fold, .t-spec, .t-fc, .t-zn, .t-sg, .t-ec, .t-pl, .t-jr, .t-ht, .t-nb, .t-cf) :is(h1, h2) { overflow-wrap: break-word; }

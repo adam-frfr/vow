@@ -26,6 +26,11 @@ import { Stationery } from "./templates/Stationery";
 import { Storybook } from "./templates/Storybook";
 import { Swiss } from "./templates/Swiss";
 import { Voyage } from "./templates/Voyage";
+import { FineLine } from "./templates/FineLine";
+import { Herbarium } from "./templates/Herbarium";
+import { Wash } from "./templates/Wash";
+import { MORE_COMPONENTS } from "./templates/more";
+import { MORE_TEMPLATES } from "@/lib/templates-more";
 
 const TEMPLATES: Record<TemplateId, (p: { ctx: Ctx }) => React.ReactNode> = {
   classic: Classic,
@@ -46,10 +51,14 @@ const TEMPLATES: Record<TemplateId, (p: { ctx: Ctx }) => React.ReactNode> = {
   atelier: Atelier,
   candlelit: Candlelit,
   bloom: Bloom,
+  fineline: FineLine,
+  herbarium: Herbarium,
+  wash: Wash,
+  ...MORE_COMPONENTS,
 };
 
 /** Designs that place their own florals (no generic corner overlay). */
-const SELF_DECORATING: TemplateId[] = ["atelier", "candlelit", "bloom", "gallery", "gazette", "swiss", "pop", "editorial"];
+const SELF_DECORATING: TemplateId[] = ["atelier", "candlelit", "bloom", "fineline", "herbarium", "wash", "gallery", "gazette", "swiss", "pop", "editorial", ...MORE_TEMPLATES.map((t) => t.id)];
 
 export interface InviteSiteProps {
   themeId: string;
@@ -62,11 +71,13 @@ export interface InviteSiteProps {
   slug?: string;
   /** Force a template (theme gallery "try this layout"). */
   template?: TemplateId;
+  /** Premium sites can drop the "Made with Vow" line. */
+  hideBranding?: boolean;
   /** Editor only: drag/resize/rotate placed art in the preview. */
   stickerEditing?: StickerEditing;
 }
 
-export function InviteSite({ themeId, content, customization: cz = {}, photos = [], wishes = [], mode, slug, template, stickerEditing }: InviteSiteProps) {
+export function InviteSite({ themeId, content, customization: cz = {}, photos = [], wishes = [], mode, slug, template, stickerEditing, hideBranding }: InviteSiteProps) {
   const theme = getTheme(themeId);
   const fonts = {
     display: cz.displayFont || theme.fonts.display,
@@ -131,7 +142,7 @@ export function InviteSite({ themeId, content, customization: cz = {}, photos = 
       <PageEffects effects={effects} />
       {!SELF_DECORATING.includes(tplId) && <DecorCorners ctx={ctx} />}
       <Template ctx={ctx} />
-      <span className="inv-made">Made with Vow</span>
+      {!hideBranding && <span className="inv-made">Made with Vow</span>}
       {(stickers.length > 0 || stickerEditing) && <StickerLayer stickers={stickers} editing={stickerEditing} />}
     </div>
   );

@@ -7,9 +7,12 @@
  * No CSS-drawn decorations.
  */
 
+import { MORE_TEMPLATES, type MoreTemplateId } from "./templates-more";
+import { WAVE_THEMES } from "./themes-wave";
 import { CREDITS, MORE_THEMES } from "./themes-more";
 import { MOTION_THEMES } from "./themes-motion";
 import { LIBRARY_THEMES } from "./themes-library";
+import { NEW_THEMES } from "./themes-new";
 
 /** Image treatment hint (used for thumbnails and some templates). */
 export type HeroLayout = "fullbleed" | "split" | "arch" | "botanical" | "polaroid" | "poster" | "card" | "cover" | "storybook";
@@ -36,7 +39,11 @@ export type TemplateId =
   | "letter"
   | "atelier"
   | "candlelit"
-  | "bloom";
+  | "bloom"
+  | "fineline"
+  | "herbarium"
+  | "wash"
+  | MoreTemplateId;
 
 export const TEMPLATES: { id: TemplateId; name: string; blurb: string }[] = [
   { id: "classic", name: "Classic Formal", blurb: "Traditional invitation wording, arched portrait, mirrored timeline." },
@@ -57,6 +64,10 @@ export const TEMPLATES: { id: TemplateId; name: string; blurb: string }[] = [
   { id: "atelier", name: "Watercolour Atelier", blurb: "Painted florals that bloom onto paper as guests scroll, framed like a stationery suite." },
   { id: "candlelit", name: "Candlelit", blurb: "A real candle lights up as guests scroll; a dark, glowing evening invitation." },
   { id: "bloom", name: "Garden Bloom", blurb: "A real flower opens beside your story as guests scroll through the day." },
+  { id: "fineline", name: "Fine Line", blurb: "A letterpress suite: painted art printed as fine line work in white ink, gold foil or black ink." },
+  { id: "herbarium", name: "Herbarium", blurb: "Your wedding as a pressed-flower collection: specimen sheets on old paper, each with a museum label." },
+  { id: "wash", name: "Watercolour Wash", blurb: "Each chapter floats on its own watercolour wash, with painted bouquets spilling over the page." },
+  ...MORE_TEMPLATES,
 ];
 
 export type CollectionId =
@@ -557,7 +568,7 @@ const BASE_THEMES: Theme[] = [
 ];
 
 /** Which site architecture each theme uses. */
-const TEMPLATE_ASSIGNMENTS: Record<TemplateId, string[]> = {
+const TEMPLATE_ASSIGNMENTS: Partial<Record<TemplateId, string[]>> = {
   classic: ["ivory-gold", "blush-peony", "ranunculus", "pampas", "spring-garden", "mehndi", "double-happiness", "arabian-nights"],
   grand: ["grand-estate", "wildflower", "sunflower", "string-lights", "alpine-lake", "royal-burgundy", "gatsby", "winter", "water-lilies", "marigold", "chuppah", "fairytale"],
   editorial: ["champagne", "orchid-noir", "noir", "golden-union", "paris", "nyc"],
@@ -576,10 +587,13 @@ const TEMPLATE_ASSIGNMENTS: Record<TemplateId, string[]> = {
   atelier: [],
   candlelit: [],
   bloom: [],
+  fineline: [],
+  herbarium: [],
+  wash: [],
 };
 
 const ASSIGNED = new Map<string, TemplateId>();
-for (const [tpl, ids] of Object.entries(TEMPLATE_ASSIGNMENTS) as [TemplateId, string[]][]) ids.forEach((id) => ASSIGNED.set(id, tpl));
+for (const [tpl, ids] of Object.entries(TEMPLATE_ASSIGNMENTS) as [TemplateId, string[]][]) (ids ?? []).forEach((id) => ASSIGNED.set(id, tpl));
 
 export const TEMPLATE_IDS = TEMPLATES.map((t) => t.id);
 
@@ -603,7 +617,7 @@ const RETIRED = new Set([
   "floating-hearts", "forever-young", "sunset-hill", "concrete",
 ]);
 
-const ALL_THEMES: Theme[] = [...MOTION_THEMES, ...BASE_THEMES, ...MORE_THEMES, ...LIBRARY_THEMES].map((t) => ({
+const ALL_THEMES: Theme[] = [...NEW_THEMES.slice(0, 6), ...WAVE_THEMES.filter((_, i) => i % 2 === 0), ...MOTION_THEMES, ...BASE_THEMES, ...MORE_THEMES, ...LIBRARY_THEMES, ...NEW_THEMES.slice(6), ...WAVE_THEMES.filter((_, i) => i % 2 === 1)].map((t) => ({
   ...t,
   template: t.template ?? ASSIGNED.get(t.id) ?? FALLBACK_TEMPLATE[t.layout],
   credit: t.credit ?? CREDITS[t.id],
