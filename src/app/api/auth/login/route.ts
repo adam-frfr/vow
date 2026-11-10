@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { authSecretProblem, withSetupErrors } from "@/lib/health";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { db } from "@/lib/db";
@@ -13,7 +14,9 @@ const schema = z.object({
 // Constant hash so unknown emails take as long as wrong passwords.
 const DUMMY_HASH = bcrypt.hashSync("not-a-real-password", 12);
 
-export async function POST(req: Request) {
+export const POST = withSetupErrors(async (req: Request) => {
+  const secretProblem = authSecretProblem();
+  if (secretProblem) return NextResponse.json({ error: `The site isn't set up correctly yet. ${secretProblem}` }, { status: 500 });
   if (!(await guard(req, "login", 10, 60_000))) {
     return NextResponse.json({ error: "Too many attempts. Please wait a minute." }, { status: 429 });
   }
@@ -40,4 +43,4 @@ export async function POST(req: Request) {
   const res = NextResponse.json({ ok: true });
   res.cookies.set(SESSION_COOKIE, await signSession(user.id), sessionCookieOptions);
   return res;
-}
+});

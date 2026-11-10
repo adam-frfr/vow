@@ -14,6 +14,7 @@ const val = (k) => process.env[k]?.trim() || "";
 const problems = [];
 const db = val("DATABASE_URL");
 if (!db) problems.push("DATABASE_URL is missing. In Supabase: Project → Connect → ORMs → Prisma, copy the pooled URL (port 6543).");
+if (val("AUTH_SECRET") && val("AUTH_SECRET").length < 32) problems.push(`AUTH_SECRET is only ${val("AUTH_SECRET").length} characters; it must be at least 32. Generate one with the command in DEPLOY.md.`);
 if (!val("AUTH_SECRET")) problems.push('AUTH_SECRET is missing. Generate one with: node -e "console.log(require(\'crypto\').randomBytes(48).toString(\'base64url\'))"');
 
 let host = "";

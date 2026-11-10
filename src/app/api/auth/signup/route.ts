@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { SESSION_COOKIE, sessionCookieOptions, signSession } from "@/lib/session";
 import { guard, ipHashOf } from "@/lib/security";
 import { getBool } from "@/lib/settings";
+import { authSecretProblem, withSetupErrors } from "@/lib/health";
 
 const schema = z.object({
   name: z.string().trim().min(1).max(80),
@@ -12,7 +13,9 @@ const schema = z.object({
   password: z.string().min(8, "Password must be at least 8 characters").max(200),
 });
 
-export async function POST(req: Request) {
+export const POST = withSetupErrors(async (req: Request) => {
+  const secretProblem = authSecretProblem();
+  if (secretProblem) return NextResponse.json({ error: `The site isn't set up correctly yet. ${secretProblem}` }, { status: 500 });
   if (!(await guard(req, "signup", 10, 60_000))) {
     return NextResponse.json({ error: "Too many attempts. Please wait a minute." }, { status: 429 });
   }
@@ -34,4 +37,4 @@ export async function POST(req: Request) {
   const res = NextResponse.json({ ok: true });
   res.cookies.set(SESSION_COOKIE, await signSession(user.id), sessionCookieOptions);
   return res;
-}
+});

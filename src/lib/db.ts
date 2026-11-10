@@ -1,16 +1,20 @@
 import { PrismaClient } from "@prisma/client";
 
 /**
- * Supabase's transaction pooler (port 6543) needs prepared statements off and a
- * single connection per serverless function; add those if the URL lacks them.
+ * Supabase's transaction pooler (port 6543) needs prepared statements off.
+ * Pages run several queries at once, so each serverless function gets a few
+ * connections (the pooler multiplexes them) and a generous wait, instead of
+ * one connection that queues every query and times out (P2024).
  */
 function databaseUrl(raw = process.env.DATABASE_URL) {
   if (!raw) return undefined;
   try {
     const u = new URL(raw);
     if (u.hostname.endsWith("pooler.supabase.com") && u.port === "6543") {
-      if (!u.searchParams.has("pgbouncer")) u.searchParams.set("pgbouncer", "true");
-      if (!u.searchParams.has("connection_limit")) u.searchParams.set("connection_limit", "1");
+      u.searchParams.set("pgbouncer", "true");
+      const limit = Number(u.searchParams.get("connection_limit") ?? 0);
+      if (!limit || limit < 5) u.searchParams.set("connection_limit", "5");
+      if (!u.searchParams.has("pool_timeout")) u.searchParams.set("pool_timeout", "30");
     }
     return u.toString();
   } catch {

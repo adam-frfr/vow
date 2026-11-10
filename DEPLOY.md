@@ -11,7 +11,7 @@ Everything after this one-time setup is controlled from **/admin**.
 ## 1. Supabase (database)
 1. supabase.com → New project. Save the database password.
 2. Project → **Connect** → ORMs → **Prisma**. Copy the two URLs:
-   - `DATABASE_URL` (port **6543**). Make sure it ends with `?pgbouncer=true&connection_limit=1`.
+   - `DATABASE_URL` (port **6543**). The site adds `pgbouncer=true`, `connection_limit=5` and `pool_timeout=30` itself, so the URL can be pasted as is.
    - `DIRECT_URL` (port **5432**, the session pooler).
 3. Tables: nothing to do, because the Vercel build creates them. If you'd rather see them first, paste
    [`supabase/setup.sql`](supabase/setup.sql) into Supabase → **SQL Editor** → New query → **Run** (new, empty project only).
@@ -24,6 +24,7 @@ Everything after this one-time setup is controlled from **/admin**.
    - `DATABASE_URL`, `DIRECT_URL` from step 1
    - `AUTH_SECRET`: generate with `node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"`. Never change it later: it encrypts the keys saved in /admin.
 3. Deploy. The build creates the database tables automatically (`prisma migrate deploy`).
+4. **Speed tip:** Vercel → Settings → **Functions** → Function Region: pick the region closest to your Supabase project. The region is in your `DATABASE_URL` host, e.g. `aws-0-ap-south-1` = Mumbai, `aws-0-us-east-1` = Washington, `aws-0-eu-central-1` = Frankfurt. Every page talks to the database several times, so being in the same region makes pages much faster.
 
 ## 3. Claim the admin account
 Open your site and **sign up first**. The first account on a fresh database becomes the admin. Do this right after the first deploy.
