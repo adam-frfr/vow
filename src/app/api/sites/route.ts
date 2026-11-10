@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { getCatalog } from "@/lib/catalog";
+import { catalogProblem } from "@/lib/locks";
 import { z } from "zod";
 import { getUserId } from "@/lib/auth";
 import { db } from "@/lib/db";
@@ -17,9 +19,12 @@ export async function POST(req: Request) {
   const userId = await getUserId();
   if (!userId) return NextResponse.json({ error: "Please log in." }, { status: 401 });
 
+  await getCatalog(); // registers builder themes so they validate
   const parsed = schema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid input" }, { status: 400 });
   const { themeId, partner1, partner2, date } = parsed.data;
+  const problem = await catalogProblem(null, { themeId });
+  if (problem) return NextResponse.json({ error: problem.error, code: problem.status === 402 ? "premium" : undefined }, { status: problem.status });
 
   const base = slugify(parsed.data.slug || `${partner1}-and-${partner2}`) || "our-wedding";
   const slug = await uniqueSlug(base);

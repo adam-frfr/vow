@@ -14,11 +14,12 @@ export default async function AdminLibrary() {
       <div>
         <h1 className="font-serif text-4xl">Art library</h1>
         <p className="mt-1 max-w-2xl text-sm text-stone">
-          {art.length} pieces · {cat.hiddenArt.length} hidden · {cat.art.length} uploaded by you. Hidden art disappears from every picker; sites already using it keep it.
-          New uploads are stored {onB2 ? "on Backblaze B2" : "in the database until you connect Backblaze B2 under Settings"}.
+          {art.length} pieces · {cat.hiddenArt.length} hidden · {cat.art.length} uploaded by you · {cat.sections.length} section{cat.sections.length === 1 ? "" : "s"} of your own.
+          Hidden art disappears from every picker; sites already using it keep it. Uploads are stored{" "}
+          {onB2 ? "on Backblaze B2" : "in the database until you connect Backblaze B2 under Settings"}.
         </p>
       </div>
-      <LibraryAdmin art={art} hidden={cat.hiddenArt} />
+      <LibraryAdmin art={art} hidden={cat.hiddenArt} sections={cat.sections} payLive={cat.payLive} />
     </div>
   );
 }

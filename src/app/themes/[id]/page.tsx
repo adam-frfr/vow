@@ -5,8 +5,9 @@ import { CardBack, CardFront } from "@/components/card/InvitationCard";
 import { InviteSite } from "@/components/invite/InviteSite";
 import { resolveCard } from "@/lib/card";
 import { SAMPLE_WISHES, sampleContent } from "@/lib/content";
-import { COLLECTIONS, isThemeId, getTheme, TEMPLATE_IDS, TEMPLATES, templateOf, THEMES as ALL_LISTED, type TemplateId } from "@/lib/themes";
+import { collectionName, isThemeId, getTheme, TEMPLATE_IDS, TEMPLATES, templateOf, THEMES as ALL_LISTED, type TemplateId } from "@/lib/themes";
 import { getCatalog } from "@/lib/catalog";
+import { adminOrNull } from "@/lib/auth";
 import { visibleThemes } from "@/lib/catalog-shared";
 
 export function generateStaticParams() {
@@ -24,14 +25,20 @@ export default async function ThemeDemo({ params, searchParams }: { params: Prom
   const forced = design && (TEMPLATE_IDS as string[]).includes(design) ? (design as TemplateId) : undefined;
   const catalog = await getCatalog();
   const THEMES = visibleThemes(catalog);
-  if (!isThemeId(id) || !THEMES.some((t) => t.id === id)) notFound();
+  const listed = THEMES.some((t) => t.id === id);
+  // Admins can preview drafts and hidden themes; everyone else gets a 404.
+  const admin = listed ? null : await adminOrNull();
+  if (!isThemeId(id) || (!listed && !admin)) notFound();
   const theme = getTheme(id);
-  const i = THEMES.findIndex((t) => t.id === id);
+  const i = Math.max(0, THEMES.findIndex((t) => t.id === id));
   const prev = THEMES[(i - 1 + THEMES.length) % THEMES.length];
   const next = THEMES[(i + 1) % THEMES.length];
 
   return (
     <>
+      {!listed && (
+        <div className="bg-ink py-2 text-center text-xs uppercase tracking-[0.2em] text-white">Admin preview: this theme is a draft or hidden, so couples can&apos;t see it.</div>
+      )}
       <div className="sticky top-0 z-30 border-b border-line bg-ivory/95 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-5">
           <div className="flex min-w-0 items-center gap-4">
@@ -41,7 +48,7 @@ export default async function ThemeDemo({ params, searchParams }: { params: Prom
             <div className="hidden min-w-0 sm:block">
               <div className="truncate font-serif text-xl leading-none">{theme.name}</div>
               <div className="text-xs text-stone">
-                {COLLECTIONS.find((c) => c.id === theme.collection)?.name} · {TEMPLATES.find((t) => t.id === (forced ?? templateOf(theme)))?.name} design
+                {collectionName(catalog.themeCollection[theme.id] ?? theme.collection)} · {TEMPLATES.find((t) => t.id === (forced ?? templateOf(theme)))?.name} design
               </div>
             </div>
           </div>

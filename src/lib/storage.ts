@@ -23,7 +23,7 @@ export const ALLOWED_TYPES: Record<string, string> = {
 /** Vercel caps request bodies at 4.5 MB; the editor shrinks bigger photos before upload. */
 export const MAX_UPLOAD_BYTES = 4 * 1024 * 1024;
 
-export const TYPE_BY_EXT: Record<string, string> = { jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", webp: "image/webp", svg: "image/svg+xml" };
+export const TYPE_BY_EXT: Record<string, string> = { jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", webp: "image/webp", svg: "image/svg+xml", json: "application/json" };
 const typeFor = (key: string) => TYPE_BY_EXT[key.split(".").pop()?.toLowerCase() ?? ""] ?? "application/octet-stream";
 
 interface B2 {

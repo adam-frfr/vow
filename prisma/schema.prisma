@@ -175,5 +175,33 @@ model ArtAsset {
   tone      String   @default("any")
   /// Comma-separated colour families (pink,red,purple,blue,green,yellow,neutral).
   fam       String   @default("")
+  /// A library section created by the admin (null = one of the built-in kinds).
+  section   String?
+  /// "image" (PNG/WebP) or "lottie" (Lottie JSON animation).
+  format    String   @default("image")
+  createdAt DateTime @default(now())
+
+  @@index([section])
+}
+
+/// A theme made in the admin's theme builder. `data` holds the theme (palette, fonts, art...).
+model CustomTheme {
+  id        String   @id
+  name      String
+  /// "draft" (admins only) or "published" (in the gallery).
+  status    String   @default("draft")
+  data      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// A library section the admin created (e.g. "Animations"), shown as a tab in the editor's library.
+model LibrarySection {
+  id        String   @id
+  name      String
+  position  Int      @default(0)
+  hidden    Boolean  @default(false)
+  /// Premium-only while payments are on.
+  locked    Boolean  @default(false)
   createdAt DateTime @default(now())
 }

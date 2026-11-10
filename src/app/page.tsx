@@ -5,9 +5,9 @@ import "./landing.css";
 import { SiteHeader } from "@/components/ui/SiteHeader";
 import { ThemeCard } from "@/components/ui/ThemeCard";
 import { CUTOUTS, FLORALS, floralUrl } from "@/lib/assets";
-import { COLLECTIONS, getTheme, googleFontsHref, templateOf } from "@/lib/themes";
+import { getTheme, googleFontsHref, templateOf } from "@/lib/themes";
 import { getCatalog } from "@/lib/catalog";
-import { visibleTemplates, visibleThemes } from "@/lib/catalog-shared";
+import { visibleCollections, visibleTemplates, visibleThemes } from "@/lib/catalog-shared";
 
 /** Re-checked every minute so admin changes (hidden themes, designs) show up. */
 export const revalidate = 60;
@@ -148,7 +148,9 @@ export default async function Home() {
       </section>
 
       <section className="lp-collections">
-        {COLLECTIONS.map((c) => (
+        {visibleCollections(catalog)
+          .filter((c) => THEMES.some((t) => t.collection === c.id))
+          .map((c) => (
           <Link key={c.id} href={`/themes?c=${c.id}`}>
             <b>{c.name}</b>
             <span>{c.blurb}</span>

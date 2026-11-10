@@ -2,14 +2,16 @@
 
 import { useMemo, useState } from "react";
 import { ThemeCard } from "@/components/ui/ThemeCard";
-import { COLLECTIONS, templateOf, type CollectionId, type TemplateId } from "@/lib/themes";
-import { visibleTemplates, visibleThemes, type Catalog } from "@/lib/catalog-shared";
+import { collectionBlurb, templateOf, type TemplateId } from "@/lib/themes";
+import { applyCatalog, themeLocked, visibleCollections, visibleTemplates, visibleThemes, type Catalog } from "@/lib/catalog-shared";
 
 export function ThemeGallery({ initial, linkPrefix = "/themes/", catalog }: { initial?: string; linkPrefix?: string; catalog: Catalog }) {
+  applyCatalog(catalog);
+  const COLLECTIONS = visibleCollections(catalog);
   const THEMES = useMemo(() => visibleThemes(catalog), [catalog]);
   const TEMPLATES = useMemo(() => visibleTemplates(catalog), [catalog]);
-  const [active, setActive] = useState<CollectionId | "all">(
-    COLLECTIONS.some((c) => c.id === initial) ? (initial as CollectionId) : "all",
+  const [active, setActive] = useState<string>(
+    COLLECTIONS.some((c) => c.id === initial) ? (initial as string) : "all",
   );
   const [design, setDesign] = useState<TemplateId | "all">("all");
   const [q, setQ] = useState("");
@@ -60,13 +62,13 @@ export function ThemeGallery({ initial, linkPrefix = "/themes/", catalog }: { in
 
       {(active !== "all" || designInfo) && (
         <p className="mt-8 text-center text-stone">
-          {designInfo ? designInfo.blurb : COLLECTIONS.find((c) => c.id === active)?.blurb}
+          {designInfo ? designInfo.blurb : collectionBlurb(active)}
         </p>
       )}
 
       <div className="mt-10 grid grid-cols-2 gap-4 sm:gap-6 md:grid-cols-3 lg:grid-cols-4">
         {list.map((t) => (
-          <ThemeCard key={t.id} theme={t} href={`${linkPrefix}${t.id}`} />
+          <ThemeCard key={t.id} theme={t} href={`${linkPrefix}${t.id}`} locked={themeLocked(catalog, t.id)} />
         ))}
       </div>
       {!list.length && <p className="mt-16 text-center text-stone">No themes match those filters.</p>}

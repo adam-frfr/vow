@@ -209,7 +209,7 @@ ALTER TABLE "Photo" ADD CONSTRAINT "Photo_siteId_fkey" FOREIGN KEY ("siteId") RE
 
 -- AddForeignKey
 ALTER TABLE "Rsvp" ADD CONSTRAINT "Rsvp_siteId_fkey" FOREIGN KEY ("siteId") REFERENCES "Site"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-INSERT INTO "_prisma_migrations" ("id", "checksum", "finished_at", "migration_name", "applied_steps_count") VALUES ('da3d1d81-d1a0-43ab-87f3-dda46b1f277a', '0bd71469ec7aba56d720834c474d4ad2786e9d9fd27ab3f5c7f6fd34701768a4', now(), '20261110000000_init', 1);
+INSERT INTO "_prisma_migrations" ("id", "checksum", "finished_at", "migration_name", "applied_steps_count") VALUES ('2715bc1b-2f20-4223-8669-263a4cd3e3b8', '0bd71469ec7aba56d720834c474d4ad2786e9d9fd27ab3f5c7f6fd34701768a4', now(), '20261110000000_init', 1);
 
 -- ── 20261110010000_storage_and_art ──
 -- CreateTable
@@ -236,6 +236,39 @@ CREATE TABLE "ArtAsset" (
 
     CONSTRAINT "ArtAsset_pkey" PRIMARY KEY ("id")
 );
-INSERT INTO "_prisma_migrations" ("id", "checksum", "finished_at", "migration_name", "applied_steps_count") VALUES ('cc88fc60-fc92-4265-9953-5c5c53cdd90f', '37a04269abfc8782a5a9d72ac09d8ce5955de9c94616b9987b8eb171a8d56d94', now(), '20261110010000_storage_and_art', 1);
+INSERT INTO "_prisma_migrations" ("id", "checksum", "finished_at", "migration_name", "applied_steps_count") VALUES ('f6ea508e-dd75-4174-9da2-fff6d4dee3b7', '37a04269abfc8782a5a9d72ac09d8ce5955de9c94616b9987b8eb171a8d56d94', now(), '20261110010000_storage_and_art', 1);
+
+-- ── 20261111000000_builder_sections_lottie ──
+-- AlterTable
+ALTER TABLE "ArtAsset" ADD COLUMN     "format" TEXT NOT NULL DEFAULT 'image',
+ADD COLUMN     "section" TEXT;
+
+-- CreateTable
+CREATE TABLE "CustomTheme" (
+    "id" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "status" TEXT NOT NULL DEFAULT 'draft',
+    "data" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "CustomTheme_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "LibrarySection" (
+    "id" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "position" INTEGER NOT NULL DEFAULT 0,
+    "hidden" BOOLEAN NOT NULL DEFAULT false,
+    "locked" BOOLEAN NOT NULL DEFAULT false,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "LibrarySection_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateIndex
+CREATE INDEX "ArtAsset_section_idx" ON "ArtAsset"("section");
+INSERT INTO "_prisma_migrations" ("id", "checksum", "finished_at", "migration_name", "applied_steps_count") VALUES ('f27588eb-1b54-4b8a-bfe6-8ec2ca74d8ba', '80f3a7737b75b4792179877b99a79babc9207ff54a6934dbc9c9ddb6c73ff896', now(), '20261111000000_builder_sections_lottie', 1);
 
 COMMIT;

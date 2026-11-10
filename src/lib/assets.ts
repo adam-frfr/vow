@@ -10,7 +10,7 @@
  */
 import { LIBRARY } from "./library";
 
-export type FloralKind = "bouquet" | "frame" | "wreath" | "corner" | "border" | "garland" | "elements" | "pattern" | "texture";
+export type FloralKind = "bouquet" | "frame" | "wreath" | "corner" | "border" | "garland" | "elements" | "pattern" | "texture" | "animation";
 export type Family = "pink" | "red" | "purple" | "blue" | "green" | "yellow" | "neutral";
 
 export interface Floral {
@@ -27,6 +27,10 @@ export interface Floral {
   fam?: Family[];
   /** Uploaded by the admin (no separate thumbnail). */
   custom?: boolean;
+  /** Admin-made library section it belongs to. */
+  section?: string;
+  /** "lottie" = a Lottie JSON animation (played with lottie-web), otherwise an image. */
+  format?: "image" | "lottie";
 }
 
 const f = (id: string, name: string, kind: FloralKind, w: number, h: number, tone: Floral["tone"] = "any"): Floral => ({ id, name, kind, w, h, tone });
@@ -100,11 +104,14 @@ const BY_ID = new Map(ALL.map((x) => [x.id, x]));
 
 /** Every painted asset: the original set plus the library. */
 export const ALL_FLORALS = ALL;
-export const floralUrl = (id: string) => (BY_ID.get(id)?.lib ? `/library/${id}.webp` : `/florals/${id}.webp`);
+export const floralUrl = (id: string) => {
+  const a = BY_ID.get(id);
+  return a?.format === "lottie" ? `/library/${id}.json` : a?.lib ? `/library/${id}.webp` : `/florals/${id}.webp`;
+};
 /** Small preview for pickers (originals are already light enough). */
 export const floralThumb = (id: string) => {
   const a = BY_ID.get(id);
-  return a?.custom ? `/library/${id}.webp` : a?.lib ? `/library/t/${id}.webp` : `/florals/${id}.webp`;
+  return a?.custom ? floralUrl(id) : a?.lib ? `/library/t/${id}.webp` : `/florals/${id}.webp`;
 };
 export const getFloral = (id?: string) => (id ? BY_ID.get(id) : undefined);
 /**
@@ -113,9 +120,10 @@ export const getFloral = (id?: string) => (id ? BY_ID.get(id) : undefined);
  */
 export function registerArt(list: Floral[] | undefined) {
   for (const a of list ?? []) {
-    if (BY_ID.has(a.id)) continue;
     const art = { ...a, lib: true, custom: true };
-    ALL.push(art);
+    const i = ALL.findIndex((x) => x.id === a.id);
+    if (i >= 0) ALL[i] = art;
+    else ALL.push(art);
     BY_ID.set(a.id, art);
   }
 }

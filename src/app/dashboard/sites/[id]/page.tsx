@@ -3,7 +3,8 @@ import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { parseContent, parseCustomization } from "@/lib/content";
-import { googleFontsHref, THEMES } from "@/lib/themes";
+import { getTheme, googleFontsHref, THEMES } from "@/lib/themes";
+import { isBuilderTheme } from "@/lib/custom-theme";
 import { Editor } from "./Editor";
 import { confirmSession, payConfig } from "@/lib/stripe";
 import { getCatalog } from "@/lib/catalog";
@@ -31,7 +32,7 @@ export default async function EditSite({ params, searchParams }: { params: Promi
   return (
     <>
       <link rel="stylesheet" href={googleFontsHref(THEMES.map((t) => t.fonts.script || t.fonts.display))} precedence="default" />
-      <CatalogProvider catalog={catalog}>
+      <CatalogProvider catalog={catalog} siteTheme={isBuilderTheme(site.themeId) ? getTheme(site.themeId) : undefined}>
       <Editor
         site={{ id: site.id, slug: site.slug, themeId: site.themeId, published: site.published, isProtected: !!site.passwordHash, premium: site.premium || justPaid }}
         pay={{ ...pay, justPaid, cancelled: paid === "cancelled" }}

@@ -2,13 +2,13 @@
 "use client";
 
 import { useCatalog } from "@/components/CatalogProvider";
-import { visibleThemes } from "@/lib/catalog-shared";
+import { themeLocked, visibleCollections, visibleThemes } from "@/lib/catalog-shared";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { InviteSite } from "@/components/invite/InviteSite";
 import { SAMPLE_WISHES, SECTION_LABELS, musicEmbed, type Customization, type InviteContent, type SectionId } from "@/lib/content";
-import { COLLECTIONS, FONT_CHOICES, getTheme, img, TEMPLATES, templateOf, type CollectionId } from "@/lib/themes";
+import { FONT_CHOICES, getTheme, img, TEMPLATES, templateOf } from "@/lib/themes";
 import type { Wish } from "@/components/invite/ctx";
 import { ShareTools } from "./ShareTools";
 import { DecorPanel } from "./DecorPanel";
@@ -214,13 +214,14 @@ export function Editor({
             ))}
           </nav>
           <div className="min-h-0 flex-1 overflow-y-auto p-5">
-            {tab === "design" && <DesignPanel themeId={themeId} setThemeId={setThemeId} cz={cz} setCz={setCz} photos={photos} />}
-            {tab === "decor" && <DecorPanel themeId={themeId} cz={cz} setCz={setCz} />}
+            {tab === "design" && <DesignPanel themeId={themeId} setThemeId={setThemeId} cz={cz} setCz={setCz} photos={photos} premium={site.premium} />}
+            {tab === "decor" && <DecorPanel themeId={themeId} cz={cz} setCz={setCz} premium={site.premium} />}
             {tab === "library" && (
               <LibraryPanel
                 stickers={stickers}
                 selected={selectedSticker}
                 dark={dark}
+                premium={site.premium}
                 onAdd={addSticker}
                 onSelect={setSelectedSticker}
                 onReorder={(id, to) =>
@@ -399,15 +400,18 @@ function DesignPanel({
   cz,
   setCz,
   photos,
+  premium,
 }: {
   themeId: string;
   setThemeId: (id: string) => void;
   cz: Customization;
   setCz: React.Dispatch<React.SetStateAction<Customization>>;
   photos: Photo[];
+  premium: boolean;
 }) {
   const cat = useCatalog();
-  const [filter, setFilter] = useState<CollectionId | "all">("all");
+  const [filter, setFilter] = useState<string>("all");
+  const [lockMsg, setLockMsg] = useState("");
   const theme = getTheme(themeId);
   const color = (key: "accent" | "bg" | "text", label: string, fallback: string) => (
     <label className="flex items-center justify-between gap-3">
@@ -451,7 +455,7 @@ function DesignPanel({
         hint={`Current design: ${TEMPLATES.find((x) => x.id === templateOf(theme))?.name}. ${TEMPLATES.find((x) => x.id === templateOf(theme))?.blurb} Switch any time; your words and photos stay put.`}
       >
         <div className="flex gap-1.5 overflow-x-auto pb-1">
-          {[{ id: "all" as const, name: "All" }, ...COLLECTIONS].map((c) => (
+          {[{ id: "all", name: "All" }, ...visibleCollections(cat)].map((c) => (
             <button
               key={c.id}
               onClick={() => setFilter(c.id)}
@@ -465,10 +469,17 @@ function DesignPanel({
           {visibleThemes(cat).filter((t) => filter === "all" || t.collection === filter).map((t) => (
             <button
               key={t.id}
-              onClick={() => setThemeId(t.id)}
+              onClick={() => {
+                if (!premium && t.id !== themeId && themeLocked(cat, t.id)) return setLockMsg(`“${t.name}” is a Premium theme. Upgrade this site under Settings → Premium to use it.`);
+                setLockMsg("");
+                setThemeId(t.id);
+              }}
               title={t.name}
-              className={`overflow-hidden rounded-lg border text-left transition ${t.id === themeId ? "border-ink ring-2 ring-ink" : "border-line hover:border-stone"}`}
+              className={`relative overflow-hidden rounded-lg border text-left transition ${t.id === themeId ? "border-ink ring-2 ring-ink" : "border-line hover:border-stone"}`}
             >
+              {!premium && themeLocked(cat, t.id) && (
+                <span className="absolute right-1 top-1 z-10 rounded-full bg-ink px-1.5 py-0.5 text-[0.5rem] uppercase tracking-wider text-white">Premium</span>
+              )}
               <div className="aspect-[4/5]" style={{ background: t.palette.bg }}>
                 <img
                   src={img(t.hero, 240)}
@@ -487,6 +498,7 @@ function DesignPanel({
         </div>
       </Group>
 
+      {lockMsg && <p className="-mt-4 mb-6 text-sm text-red-700">{lockMsg}</p>}
       <Group title="Colours" hint={`Starting from ${theme.name}.`}>
         {color("accent", "Accent", theme.palette.accent)}
         {color("bg", "Background", theme.palette.bg)}

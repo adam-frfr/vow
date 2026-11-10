@@ -36,7 +36,15 @@ Open your site and **sign up first**. The first account on a fresh database beco
 - **Maintenance mode**: pauses the site for everyone but admins.
 
 ## Controlled from /admin
-Users, sites, spam and abuse, payments, themes and designs (hide/show), the art library (upload, hide, delete), AI, payments, storage, maintenance, sign-ups, announcement.
+- **Themes & designs**: create themes in the theme builder (live preview, drafts, publish/unpublish, duplicate any theme, delete unused ones); hide or show any theme or design; lock themes and designs as Premium-only.
+- **Collections**: create, rename, describe, reorder, hide and delete collections; move any theme into any collection.
+- **Art library**: create your own sections (tabs in every couple's library), upload images (PNG/WebP) or Lottie animations (JSON) into them, move, hide, lock as Premium or delete them.
+- Users, sites, spam and abuse, payments and Premium pricing, AI (Groq), storage (Backblaze), maintenance mode, sign-ups, the dashboard announcement.
+
+Premium locks only apply while payments are on; with payments off everything stays free. Hidden or locked things keep working for sites that already use them.
+
+## Still needs code (by design)
+Brand-new **site designs** (page layouts such as Passport or Vinyl) and brand-new **features**. Everything else above is data the admin panel manages.
 
 ## Not in /admin (by design)
 `DATABASE_URL`, `DIRECT_URL`, `AUTH_SECRET`: the site needs them to reach its own settings, and `AUTH_SECRET` is the key that encrypts the others.

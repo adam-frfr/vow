@@ -1,6 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
+import { Lottie } from "@/components/Lottie";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { floralUrl, getFloral } from "@/lib/assets";
 import type { Sticker } from "@/lib/stickers";
@@ -217,7 +218,13 @@ export function StickerLayer({ stickers, editing }: { stickers: Sticker[]; editi
             onPointerDown={editing ? (e) => startDrag(e, s, "move") : undefined}
           >
             <div className="stk-art" style={{ transform: s.flip ? "scaleX(-1)" : undefined }}>
-              {anim === "ink" ? <InkBloom floral={fl} origin="tl" /> : <Animated key={anim} anim={anim} src={floralUrl(fl.id)} editing={!!editing} />}
+              {fl.format === "lottie" ? (
+                <Lottie src={floralUrl(fl.id)} className="stk-lottie" />
+              ) : anim === "ink" ? (
+                <InkBloom floral={fl} origin="tl" />
+              ) : (
+                <Animated key={anim} anim={anim} src={floralUrl(fl.id)} editing={!!editing} />
+              )}
             </div>
             {selected && (
               <>

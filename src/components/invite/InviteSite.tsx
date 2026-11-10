@@ -2,7 +2,7 @@ import type { CSSProperties } from "react";
 import "./invite.css";
 import { initials, type Customization, type InviteContent } from "@/lib/content";
 import { luminance, resolveDecorStyle } from "@/lib/decor";
-import { getTheme, googleFontsHref, img, SAMPLE_GALLERY, TEMPLATE_IDS, templateOf, type TemplateId } from "@/lib/themes";
+import { getTheme, googleFontsHref, img, SAMPLE_GALLERY, TEMPLATE_IDS, templateOf, type TemplateId, type Theme } from "@/lib/themes";
 import { buildCtx, type Ctx, type Mode, type Wish } from "./ctx";
 import { DecorCorners } from "./Decor";
 import { Intro } from "./Intro";
@@ -79,11 +79,13 @@ export interface InviteSiteProps {
   stickerEditing?: StickerEditing;
   /** Art the admin uploaded (so stickers and decor using it can render). */
   art?: Floral[];
+  /** An unsaved theme to render instead of `themeId` (the admin's theme builder preview). */
+  theme?: Theme;
 }
 
-export function InviteSite({ themeId, content, customization: cz = {}, photos = [], wishes = [], mode, slug, template, stickerEditing, hideBranding, art }: InviteSiteProps) {
+export function InviteSite({ themeId, content, customization: cz = {}, photos = [], wishes = [], mode, slug, template, stickerEditing, hideBranding, art, theme: draftTheme }: InviteSiteProps) {
   registerArt(art);
-  const theme = getTheme(themeId);
+  const theme = draftTheme ?? getTheme(themeId);
   const fonts = {
     display: cz.displayFont || theme.fonts.display,
     body: cz.bodyFont || theme.fonts.body,

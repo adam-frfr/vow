@@ -1,10 +1,10 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useCatalog } from "@/components/CatalogProvider";
-import { visibleArt } from "@/lib/catalog-shared";
+import { artLocked, visibleArt } from "@/lib/catalog-shared";
+import { ArtThumb } from "@/components/ArtThumb";
 import { useMemo, useState } from "react";
-import { floralThumb, getFloral, type Family, type FloralKind } from "@/lib/assets";
+import { getFloral, type Family, type FloralKind } from "@/lib/assets";
 import { floralFamilies } from "@/lib/decor";
 import { STICKER_ANIMS, type Sticker, type StickerAnim } from "@/lib/stickers";
 
@@ -32,6 +32,7 @@ export function LibraryPanel({
   stickers,
   selected,
   dark,
+  premium,
   onAdd,
   onChange,
   onSelect,
@@ -43,6 +44,7 @@ export function LibraryPanel({
   stickers: Sticker[];
   selected: string | null;
   dark: boolean;
+  premium: boolean;
   onAdd: (asset: string) => void;
   onChange: (s: Sticker) => void;
   onSelect: (id: string | null) => void;
@@ -51,16 +53,19 @@ export function LibraryPanel({
   onReorder: (id: string, to: "front" | "back") => void;
   onClear: () => void;
 }) {
-  const [kind, setKind] = useState<(typeof KINDS)[number]["id"]>("all");
+  const [kind, setKind] = useState<string>("all");
   const [fam, setFam] = useState<Family | null>(null);
   const [q, setQ] = useState("");
   const cat = useCatalog();
+  const sections = cat.sections.filter((x) => !x.hidden);
+  const [lockMsg, setLockMsg] = useState("");
   const items = useMemo(() => {
+    const section = kind.startsWith("sec:") ? kind.slice(4) : null;
     const k = KINDS.find((x) => x.id === kind)?.kinds ?? STICKERABLE;
     const words = q.toLowerCase().split(/\s+/).filter(Boolean);
     return visibleArt(cat).filter(
       (f) =>
-        k.includes(f.kind) &&
+        (section ? f.section === section : k.includes(f.kind) || (kind === "all" && !!f.section)) &&
         (!fam || floralFamilies(f).includes(fam)) &&
         words.every((w) => f.name.toLowerCase().includes(w) || f.kind.includes(w) || floralFamilies(f).some((x) => x.includes(w))),
     );
@@ -80,7 +85,7 @@ export function LibraryPanel({
       {sel && selArt && (
         <div className="sticky -top-5 z-10 -mx-1 space-y-3 rounded-2xl border-2 border-[#2f6fed]/40 bg-[#f5f8ff] p-4 shadow-[0_10px_24px_-14px_rgba(0,0,0,.35)]">
           <div className="flex items-center gap-3">
-            <img src={floralThumb(selArt.id)} alt="" className="h-12 w-12 rounded-lg bg-white object-contain p-1" />
+            <ArtThumb art={selArt} className="h-12 w-12 rounded-lg bg-white object-contain p-1" />
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium">{selArt.name}</p>
               <p className="text-xs text-stone">Selected · arrow keys nudge, Delete removes</p>
@@ -138,7 +143,7 @@ export function LibraryPanel({
                   onClick={() => onSelect(s.id)}
                   className={`h-12 w-12 rounded-lg border bg-[#f6efe4] p-1 ${s.id === selected ? "border-[#2f6fed] ring-2 ring-[#2f6fed]" : "border-line"}`}
                 >
-                  {a && <img src={floralThumb(a.id)} alt="" className="h-full w-full object-contain" />}
+                  {a && <ArtThumb art={a} className="h-full w-full object-contain" />}
                 </button>
               );
             })}
@@ -152,6 +157,12 @@ export function LibraryPanel({
           {KINDS.map((k) => (
             <Chip key={k.id} on={kind === k.id} onClick={() => setKind(k.id)}>
               {k.label}
+            </Chip>
+          ))}
+          {sections.map((x) => (
+            <Chip key={x.id} on={kind === `sec:${x.id}`} onClick={() => setKind(`sec:${x.id}`)}>
+              {x.name}
+              {!premium && cat.payLive && x.locked ? " · Premium" : ""}
             </Chip>
           ))}
         </div>
@@ -176,21 +187,28 @@ export function LibraryPanel({
         <div className="grid grid-cols-3 gap-2">
           {items.map((f) => {
             const disabled = dark && f.tone === "light";
+            const locked = !premium && artLocked(cat, f);
             return (
               <button
                 key={f.id}
                 type="button"
                 disabled={disabled}
                 title={disabled ? `${f.name} (light backgrounds only)` : `Add ${f.name}`}
-                onClick={() => onAdd(f.id)}
+                onClick={() => {
+                  if (locked) return setLockMsg(`“${f.name}” is Premium. Upgrade this site under Settings → Premium to use it.`);
+                  setLockMsg("");
+                  onAdd(f.id);
+                }}
                 className="group relative aspect-square overflow-hidden rounded-xl border border-line bg-[#f6efe4] p-1.5 transition hover:border-stone disabled:opacity-30"
               >
-                <img src={floralThumb(f.id)} alt={f.name} loading="lazy" className="h-full w-full object-contain transition group-hover:scale-105" />
+                {locked && <span className="absolute right-1 top-1 z-10 rounded-full bg-ink px-1.5 py-0.5 text-[0.5rem] uppercase tracking-wider text-white">Premium</span>}
+                <ArtThumb art={f} className="h-full w-full object-contain transition group-hover:scale-105" />
                 <span className="absolute inset-x-0 bottom-0 truncate bg-white/85 px-1 py-0.5 text-[0.6rem] opacity-0 transition group-hover:opacity-100">{f.name}</span>
               </button>
             );
           })}
         </div>
+        {lockMsg && <p className="text-sm text-red-700">{lockMsg}</p>}
         {items.length === 0 && <p className="text-sm text-stone">Nothing matches. Try another colour or word.</p>}
       </div>
     </div>

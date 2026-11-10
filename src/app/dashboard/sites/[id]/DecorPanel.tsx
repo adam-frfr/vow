@@ -2,7 +2,7 @@
 "use client";
 
 import { useCatalog } from "@/components/CatalogProvider";
-import { visibleArt, visibleTemplates } from "@/lib/catalog-shared";
+import { designLocked, visibleArt, visibleTemplates } from "@/lib/catalog-shared";
 import { CUTOUTS, cutoutFrame, floralUrl, type FloralKind } from "@/lib/assets";
 import type { Customization } from "@/lib/content";
 import { luminance, resolveDecorStyle, STYLE_LABELS, type Decor, type StyleAxes } from "@/lib/decor";
@@ -105,7 +105,7 @@ function Segmented<K extends string>({
   );
 }
 
-export function DecorPanel({ themeId, cz, setCz }: { themeId: string; cz: Customization; setCz: SetCz }) {
+export function DecorPanel({ themeId, cz, setCz, premium }: { themeId: string; cz: Customization; setCz: SetCz; premium: boolean }) {
   const cat = useCatalog();
   const theme = getTheme(themeId);
   const tplId = (cz.template as TemplateId) || templateOf(theme);
@@ -125,11 +125,15 @@ export function DecorPanel({ themeId, cz, setCz }: { themeId: string; cz: Custom
           onChange={(e) => setCz((c) => ({ ...c, template: e.target.value || undefined }))}
         >
           <option value="">Theme default ({TEMPLATES.find((t) => t.id === templateOf(theme))?.name})</option>
-          {visibleTemplates(cat).map((t) => (
-            <option key={t.id} value={t.id}>
-              {t.name}
-            </option>
-          ))}
+          {visibleTemplates(cat).map((t) => {
+            const locked = !premium && designLocked(cat, t.id) && t.id !== cz.template;
+            return (
+              <option key={t.id} value={t.id} disabled={locked}>
+                {t.name}
+                {locked ? " (Premium)" : ""}
+              </option>
+            );
+          })}
         </select>
         <p className="text-xs text-stone">{TEMPLATES.find((t) => t.id === tplId)?.blurb}</p>
       </Section>

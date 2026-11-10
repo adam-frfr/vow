@@ -6,6 +6,8 @@ import { parseContent, parseCustomization } from "@/lib/content";
 import { CardStudio } from "./CardStudio";
 import { getCatalog } from "@/lib/catalog";
 import { CatalogProvider } from "@/components/CatalogProvider";
+import { isBuilderTheme } from "@/lib/custom-theme";
+import { getTheme } from "@/lib/themes";
 
 export const metadata: Metadata = { title: "Invitation card" };
 
@@ -16,7 +18,7 @@ export default async function CardPage({ params }: { params: Promise<{ id: strin
   if (!site) notFound();
   const catalog = await getCatalog();
   return (
-    <CatalogProvider catalog={catalog}>
+    <CatalogProvider catalog={catalog} siteTheme={isBuilderTheme(site.themeId) ? getTheme(site.themeId) : undefined}>
     <CardStudio
       siteId={site.id}
       slug={site.slug}

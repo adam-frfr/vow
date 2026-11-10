@@ -625,6 +625,38 @@ const ALL_THEMES: Theme[] = [...NEW_THEMES.slice(0, 6), ...WAVE_THEMES.filter((_
 
 export const THEMES: Theme[] = ALL_THEMES.filter((t) => !RETIRED.has(t.id));
 
+/**
+ * Themes made in the admin's theme builder, loaded from the database at runtime.
+ * Every theme (drafts too) resolves by id; only published ones are listed.
+ */
+export function registerThemes(list: Theme[], published: (id: string) => boolean) {
+  for (const t of list) {
+    const i = ALL_THEMES.findIndex((x) => x.id === t.id);
+    if (i >= 0) ALL_THEMES[i] = t;
+    else ALL_THEMES.push(t);
+    const j = THEMES.findIndex((x) => x.id === t.id);
+    if (published(t.id)) {
+      if (j >= 0) THEMES[j] = t;
+      else THEMES.unshift(t);
+    } else if (j >= 0) THEMES.splice(j, 1);
+  }
+}
+
+export function unregisterTheme(id: string) {
+  const i = ALL_THEMES.findIndex((x) => x.id === id && x.id.startsWith("u-"));
+  if (i >= 0) ALL_THEMES.splice(i, 1);
+  const j = THEMES.findIndex((x) => x.id === id && x.id.startsWith("u-"));
+  if (j >= 0) THEMES.splice(j, 1);
+}
+
+/** Collection names, including ones the admin created or renamed. */
+const COLLECTION_NAMES = new Map<string, { name: string; blurb: string }>();
+export function registerCollections(list: { id: string; name: string; blurb: string }[]) {
+  for (const c of list) COLLECTION_NAMES.set(c.id, { name: c.name, blurb: c.blurb });
+}
+export const collectionName = (id: string) => COLLECTION_NAMES.get(id)?.name ?? COLLECTIONS.find((c) => c.id === id)?.name ?? "";
+export const collectionBlurb = (id: string) => COLLECTION_NAMES.get(id)?.blurb ?? COLLECTIONS.find((c) => c.id === id)?.blurb ?? "";
+
 export function templateOf(theme: Theme): TemplateId {
   return theme.template ?? FALLBACK_TEMPLATE[theme.layout];
 }

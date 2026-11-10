@@ -1,18 +1,20 @@
 "use client";
 
-import { visibleThemes, type Catalog } from "@/lib/catalog-shared";
+import { applyCatalog, themeLocked, visibleCollections, visibleThemes, type Catalog } from "@/lib/catalog-shared";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { ThemeMatch } from "../sites/[id]/AiAssist";
 import { ThemeCard } from "@/components/ui/ThemeCard";
-import { COLLECTIONS, getTheme, type CollectionId } from "@/lib/themes";
+import { getTheme } from "@/lib/themes";
 
 export function NewSiteForm({ initialTheme, catalog }: { initialTheme?: string; catalog: Catalog }) {
+  applyCatalog(catalog);
   const THEMES = visibleThemes(catalog);
+  const COLLECTIONS = visibleCollections(catalog);
   const router = useRouter();
   const [themeId, setThemeId] = useState(initialTheme ?? "");
   const [step, setStep] = useState<1 | 2>(initialTheme ? 2 : 1);
-  const [filter, setFilter] = useState<CollectionId | "all">("all");
+  const [filter, setFilter] = useState<string>("all");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
@@ -49,7 +51,7 @@ export function NewSiteForm({ initialTheme, catalog }: { initialTheme?: string; 
           />
         </div>
         <div className="mt-8 flex gap-2 overflow-x-auto pb-2">
-          {[{ id: "all" as const, name: "All" }, ...COLLECTIONS].map((c) => (
+          {[{ id: "all", name: "All" }, ...COLLECTIONS].map((c) => (
             <button
               key={c.id}
               onClick={() => setFilter(c.id)}
@@ -70,7 +72,7 @@ export function NewSiteForm({ initialTheme, catalog }: { initialTheme?: string; 
                 window.scrollTo({ top: 0 });
               }}
             >
-              <ThemeCard theme={t} selected={t.id === themeId} />
+              <ThemeCard theme={t} selected={t.id === themeId} locked={themeLocked(catalog, t.id)} />
             </button>
           ))}
         </div>

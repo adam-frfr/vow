@@ -7,6 +7,8 @@ import { db } from "@/lib/db";
 import { contentSchema, customizationSchema, RESERVED_SLUGS, slugify } from "@/lib/content";
 import { isThemeId } from "@/lib/themes";
 import { deleteStored } from "@/lib/storage";
+import { getCatalog } from "@/lib/catalog";
+import { catalogProblem } from "@/lib/locks";
 
 const patchSchema = z.object({
   themeId: z.string().refine(isThemeId).optional(),
@@ -23,9 +25,13 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const site = await getOwnedSite(id);
   if (!site) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
+  await getCatalog(); // registers builder themes so they validate
   const parsed = patchSchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid input" }, { status: 400 });
   const body = parsed.data;
+
+  const problem = await catalogProblem(site, { themeId: body.themeId, customization: body.customization });
+  if (problem) return NextResponse.json({ error: problem.error, code: problem.status === 402 ? "premium" : undefined }, { status: problem.status });
 
   if (typeof body.password === "string" && (await needsPremium("password", site))) {
     return NextResponse.json({ error: "Password protection is part of Premium. Upgrade this site to use it.", code: "premium" }, { status: 402 });

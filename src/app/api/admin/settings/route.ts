@@ -3,6 +3,7 @@ import { z } from "zod";
 import { withAdmin } from "@/lib/admin-api";
 import { SETTINGS, setSetting, settingsForAdmin, type SettingKey } from "@/lib/settings";
 import { forgetStorageConfig } from "@/lib/storage";
+import { forgetCatalog } from "@/lib/catalog";
 import { ensureWebhook } from "@/lib/stripe";
 
 const VALID: Partial<Record<SettingKey, z.ZodType<string>>> = {
@@ -38,6 +39,7 @@ export async function PATCH(req: Request) {
     }
     for (const [k, v] of Object.entries(body)) await setSetting(k as SettingKey, (v as string).trim());
     forgetStorageConfig();
+    forgetCatalog(); // payments on/off changes whether Premium locks apply
     // A new Stripe key: create the webhook and save its secret automatically.
     let notice: { ok: boolean; message: string } | undefined;
     // (Skipped when the admin typed a signing secret themselves in the same save.)

@@ -1,8 +1,8 @@
 /* eslint-disable @next/next/no-img-element */
 import Link from "next/link";
-import { COLLECTIONS, img, TEMPLATES, templateOf, type Theme } from "@/lib/themes";
+import { collectionName, img, TEMPLATES, templateOf, type Theme } from "@/lib/themes";
 
-export function ThemeCard({ theme, href, selected }: { theme: Theme; href?: string; selected?: boolean }) {
+export function ThemeCard({ theme, href, selected, locked }: { theme: Theme; href?: string; selected?: boolean; locked?: boolean }) {
   const p = theme.palette;
   const framed = theme.layout === "botanical" || theme.layout === "poster";
   const tpl = TEMPLATES.find((t) => t.id === templateOf(theme));
@@ -28,6 +28,9 @@ export function ThemeCard({ theme, href, selected }: { theme: Theme; href?: stri
             {tpl.name}
           </span>
         )}
+        {locked && (
+          <span className="absolute right-3 top-3 rounded-full bg-ink px-2.5 py-1 text-[0.6rem] font-medium uppercase tracking-[0.14em] text-white">Premium</span>
+        )}
         <div className={`absolute inset-x-0 bottom-0 p-5 text-center ${framed ? "" : "text-white"}`} style={framed ? { color: p.text } : undefined}>
           <div
             className="text-[1.65rem] leading-tight"
@@ -44,7 +47,7 @@ export function ThemeCard({ theme, href, selected }: { theme: Theme; href?: stri
       <div className="flex items-start justify-between gap-3 p-4">
         <div className="min-w-0">
           <div className="truncate font-serif text-xl">{theme.name}</div>
-          <div className="truncate text-xs text-stone">{COLLECTIONS.find((c) => c.id === theme.collection)?.name}</div>
+          <div className="truncate text-xs text-stone">{collectionName(theme.collection)}</div>
         </div>
         <div className="mt-1 flex shrink-0 -space-x-1.5">
           {[p.bg, p.accent, p.text].map((c, i) => (

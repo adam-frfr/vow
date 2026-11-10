@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { SiteHeader } from "@/components/ui/SiteHeader";
 import { ThemeGallery } from "./ThemeGallery";
-import { COLLECTIONS, googleFontsHref } from "@/lib/themes";
+import { googleFontsHref } from "@/lib/themes";
 import { getCatalog } from "@/lib/catalog";
-import { visibleTemplates, visibleThemes } from "@/lib/catalog-shared";
+import { visibleCollections, visibleTemplates, visibleThemes } from "@/lib/catalog-shared";
 
 export const metadata: Metadata = { title: "Themes" };
 
@@ -19,7 +19,7 @@ export default async function ThemesPage({ searchParams }: { searchParams: Promi
       <main className="mx-auto max-w-7xl px-5 pb-24 pt-14">
         <div className="text-center">
           <p className="eyebrow">
-            {THEMES.length} themes · {TEMPLATES.length} site designs · {COLLECTIONS.length} collections
+            {THEMES.length} themes · {TEMPLATES.length} site designs · {visibleCollections(catalog).length} collections
           </p>
           <h1 className="mt-3 font-serif text-5xl sm:text-6xl">Find your look</h1>
           <p className="mx-auto mt-4 max-w-xl text-stone">
