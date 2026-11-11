@@ -17,7 +17,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  // Node.js runtime so the maintenance switch can be read from the database.
-  runtime: "nodejs",
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|library/|florals/|fx/|cutouts/|api/).*)"],
+  matcher: ["/dashboard/:path*", "/admin/:path*"],
 };

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { supabase } from "@/lib/supabase";
 
 export const dynamic = "force-dynamic";
 
@@ -12,6 +12,6 @@ export async function GET(req: Request) {
   if (secret && req.headers.get("authorization") !== `Bearer ${secret}`) {
     return new Response("Unauthorized", { status: 401 });
   }
-  await db.user.count();
+  await supabase.from("User").select("id", { count: "exact", head: true });
   return NextResponse.json({ ok: true, at: new Date().toISOString() });
 }
