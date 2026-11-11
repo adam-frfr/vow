@@ -113,7 +113,16 @@ export function NewSiteForm({ initialTheme, catalog }: { initialTheme?: string; 
           </label>
           <input id="date" name="date" type="date" className="field" />
         </div>
-        {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
+        {error && (
+          <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700">
+            <p>{error}</p>
+            {error.includes("Premium") && (
+              <p className="mt-2 text-xs">
+                You can create your site with a free theme first, and unlock this theme at any time from your site Settings → Upgrade.
+              </p>
+            )}
+          </div>
+        )}
         <button className="btn" disabled={busy}>
           {busy ? "Creating…" : "Create my site"}
         </button>

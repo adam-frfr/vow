@@ -6,6 +6,7 @@ import { requireUser } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { formatDate, parseContent, parseCustomization } from "@/lib/content";
 import { getTheme, img } from "@/lib/themes";
+import { DeleteSiteButton } from "./DeleteSiteButton";
 import { getSetting } from "@/lib/settings";
 
 export const metadata: Metadata = { title: "My sites" };
@@ -104,6 +105,7 @@ export default async function Dashboard() {
                       <Link href={`/${s.slug}`} target="_blank" className="btn btn-light">
                         View
                       </Link>
+                      <DeleteSiteButton id={s.id} names={`${c.partner1} & ${c.partner2}`} />
                     </div>
                   </div>
                 </div>
