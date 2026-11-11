@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getUser } from "@/lib/auth";
 import { parseContent } from "@/lib/content";
-import { db } from "@/lib/db";
+import { supabase } from "@/lib/supabase";
 import { guard } from "@/lib/security";
 import { createCheckout, payConfig } from "@/lib/stripe";
 
@@ -13,7 +13,7 @@ export async function POST(req: Request) {
   if (!(await guard(req, "checkout", 10, 60_000))) return NextResponse.json({ error: "Please wait a moment." }, { status: 429 });
   const p = z.object({ siteId: z.string() }).safeParse(await req.json().catch(() => null));
   if (!p.success) return NextResponse.json({ error: "Invalid request" }, { status: 400 });
-  const site = await db.site.findFirst({ where: { id: p.data.siteId, userId: user.id } });
+  const { data: site } = await supabase.from("Site").select("*").eq("id", p.data.siteId).eq("userId", user.id).maybeSingle();
   if (!site) return NextResponse.json({ error: "Site not found." }, { status: 404 });
   if (site.premium) return NextResponse.json({ error: "This site is already Premium." }, { status: 400 });
   if (!(await payConfig()).live) return NextResponse.json({ error: "Upgrades aren't available right now." }, { status: 503 });

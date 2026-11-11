@@ -3,7 +3,7 @@ import { z } from "zod";
 import { translateSite } from "@/lib/ai";
 import { aiForSite } from "@/lib/ai-route";
 import { parseContent, parseCustomization, SECTION_LABELS } from "@/lib/content";
-import { db } from "@/lib/db";
+import { supabase } from "@/lib/supabase";
 
 /** Translate the site's wording into a second language and save it (guests switch on the live site). */
 export async function POST(req: Request) {
@@ -17,9 +17,9 @@ export async function POST(req: Request) {
     const r = await translateSite(c, p.data.language, titles);
     const translation = { lang: p.data.language, fields: r.translation };
     // Re-read so a save from the editor in the meantime isn't overwritten.
-    const fresh = await db.site.findUnique({ where: { id: site.id }, select: { customization: true } });
+    const { data: fresh } = await supabase.from("Site").select("customization").eq("id", site.id).maybeSingle();
     const cz = parseCustomization(fresh?.customization ?? site.customization);
-    await db.site.update({ where: { id: site.id }, data: { customization: JSON.stringify({ ...cz, translation }) } });
+    await supabase.from("Site").update({ customization: JSON.stringify({ ...cz, translation }), updatedAt: new Date().toISOString() }).eq("id", site.id);
     return { body: { translation }, tokens: r.tokens };
   });
 }

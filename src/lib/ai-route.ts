@@ -1,11 +1,23 @@
 import "server-only";
 import { NextResponse } from "next/server";
 import { getUserId } from "./auth";
-import { db } from "./db";
+import { supabase } from "./supabase";
 import { AiError, assertAiAllowed, recordAi } from "./groq";
 import { guard } from "./security";
 
-type Site = NonNullable<Awaited<ReturnType<typeof db.site.findFirst>>>;
+interface Site {
+  id: string;
+  userId: string;
+  slug: string;
+  themeId: string;
+  content: string;
+  customization: string;
+  published: boolean;
+  passwordHash?: string | null;
+  premium: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
 
 /**
  * Shared plumbing for the couple's AI endpoints: signed in, owns the site,
@@ -20,7 +32,9 @@ export async function aiForSite(
   const userId = await getUserId();
   if (!userId) return NextResponse.json({ error: "Please sign in again." }, { status: 401 });
   if (!(await guard(req, "ai", 20, 60_000))) return NextResponse.json({ error: "Slow down a little and try again in a minute." }, { status: 429 });
-  const site = typeof siteId === "string" ? await db.site.findFirst({ where: { id: siteId, userId } }) : null;
+  
+  if (typeof siteId !== "string") return NextResponse.json({ error: "Site not found." }, { status: 404 });
+  const { data: site } = await supabase.from("Site").select("*").eq("id", siteId).eq("userId", userId).maybeSingle();
   if (!site) return NextResponse.json({ error: "Site not found." }, { status: 404 });
   try {
     await assertAiAllowed(userId, site);
