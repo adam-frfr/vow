@@ -120,9 +120,19 @@ async function load() {
  */
 export async function getCatalog(): Promise<Catalog> {
   if (cache && Date.now() - cache.at < 15_000) return cache.cat;
-  const { cat, drafts } = await load();
-  cache = { at: Date.now(), cat, drafts };
-  return cat;
+  try {
+    const { cat, drafts } = await load();
+    cache = { at: Date.now(), cat, drafts };
+    return cat;
+  } catch (e) {
+    console.warn("⚠️ Database unreachable during getCatalog(), using default built-in catalog:", e);
+    const fallback: Catalog = {
+      ...EMPTY_CATALOG,
+      collections: COLLECTIONS.map((c) => ({ id: c.id as string, name: c.name, blurb: c.blurb, hidden: false, custom: false })),
+    };
+    applyCatalog(fallback);
+    return fallback;
+  }
 }
 
 /** Draft builder themes (admins only). */
