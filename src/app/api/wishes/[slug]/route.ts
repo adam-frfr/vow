@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { classifySpam, looksSpammy } from "@/lib/ai";
 import { getUserId } from "@/lib/auth";
-import { db } from "@/lib/db";
+import { supabase } from "@/lib/supabase";
 import { parseContent } from "@/lib/content";
 import { recordAi } from "@/lib/groq";
 import { guard, ipHashOf, logSecurity } from "@/lib/security";
@@ -17,11 +17,18 @@ const schema = z.object({
 
 export async function POST(req: Request, { params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const site = await db.site.findUnique({ where: { slug }, include: { user: { select: { blocked: true } } } });
+  const { data: site } = await supabase
+    .from("Site")
+    .select("*, user:User(blocked)")
+    .eq("slug", slug)
+    .maybeSingle();
+
   if (!(await guard(req, "wish", 8, 60_000, site?.id))) {
     return NextResponse.json({ error: "Too many messages. Please try again shortly." }, { status: 429 });
   }
-  if (!site || !site.published || site.user.blocked) return NextResponse.json({ error: "This guestbook isn't open." }, { status: 404 });
+
+  const isBlocked = (site?.user as { blocked?: boolean })?.blocked;
+  if (!site || !site.published || isBlocked) return NextResponse.json({ error: "This guestbook isn't open." }, { status: 404 });
   if (!(await hasSiteAccess(site, await getUserId()))) return NextResponse.json({ error: "This site is private." }, { status: 403 });
   if (parseContent(site.content).hidden.includes("wishes")) return NextResponse.json({ error: "The guestbook is closed." }, { status: 400 });
 
@@ -48,8 +55,17 @@ export async function POST(req: Request, { params }: { params: Promise<{ slug: s
     }
   }
 
-  const wish = await db.wish.create({ data: { siteId: site.id, name, message, hidden: spam, flagged: spam, ipHash: ipHashOf(req) } });
+  const id = "w_" + Date.now() + "_" + Math.random().toString(36).slice(2, 7);
+  const { data: wish } = await supabase.from("Wish").insert({
+    id,
+    siteId: site.id,
+    name,
+    message,
+    hidden: spam,
+    flagged: spam,
+    ipHash: ipHashOf(req),
+  }).select().single();
+
   if (spam) await logSecurity(req, "spam", "guestbook", { siteId: site.id, detail: `${reason}: ${message}` });
-  // Spam is quietly held back; the sender isn't told (so bots learn nothing).
-  return NextResponse.json({ wish: { id: wish.id, name: wish.name, message: wish.message, createdAt: wish.createdAt.toISOString() } });
+  return NextResponse.json({ wish: { id: wish?.id ?? id, name, message, createdAt: new Date().toISOString() } });
 }

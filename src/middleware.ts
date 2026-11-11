@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { SESSION_COOKIE, verifySession } from "@/lib/session";
-import { db } from "@/lib/db";
+import { supabase } from "@/lib/supabase";
 import { getBool } from "@/lib/settings";
 
 /** Paths that stay open during maintenance (sign-in for admins, the admin panel, APIs, art). */
@@ -12,8 +12,12 @@ export async function middleware(req: NextRequest) {
   const userId = await verifySession(req.cookies.get(SESSION_COOKIE)?.value);
 
   if (!OPEN.test(path) && (await getBool("site.maintenance").catch(() => false))) {
-    const admin = userId ? await db.user.findUnique({ where: { id: userId }, select: { isAdmin: true } }).catch(() => null) : null;
-    if (!admin?.isAdmin) return NextResponse.rewrite(new URL("/maintenance", req.url), { status: 503 });
+    let isAdmin = false;
+    if (userId) {
+      const { data } = await supabase.from("User").select("isAdmin").eq("id", userId).maybeSingle();
+      isAdmin = !!data?.isAdmin;
+    }
+    if (!isAdmin) return NextResponse.rewrite(new URL("/maintenance", req.url), { status: 503 });
   }
 
   if (PRIVATE.test(path) && !userId) {

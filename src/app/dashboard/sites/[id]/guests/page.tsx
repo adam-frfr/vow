@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { SiteHeader } from "@/components/ui/SiteHeader";
 import { requireUser } from "@/lib/auth";
-import { db } from "@/lib/db";
+import { supabase } from "@/lib/supabase";
 import { parseContent } from "@/lib/content";
 import { DeleteRsvp, ThankYouNotes, WishModeration } from "./GuestActions";
 
@@ -12,13 +12,21 @@ export const metadata: Metadata = { title: "Guests" };
 export default async function Guests({ params }: { params: Promise<{ id: string }> }) {
   const user = await requireUser();
   const { id } = await params;
-  const site = await db.site.findFirst({
-    where: { id, userId: user.id },
-    include: { rsvps: { orderBy: { createdAt: "desc" } }, wishes: { orderBy: { createdAt: "desc" } } },
-  });
+  const { data: site } = await supabase
+    .from("Site")
+    .select("*, rsvps:Rsvp(*), wishes:Wish(*)")
+    .eq("id", id)
+    .eq("userId", user.id)
+    .maybeSingle();
+
   if (!site) notFound();
+  const rawRsvps = (site.rsvps as { id: string; name: string; email: string | null; attending: boolean; guests: number; meal: string | null; message: string | null; createdAt: string }[]) || [];
+  const rsvps = rawRsvps.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  const wishes = ((site.wishes as { id: string; name: string; message: string; hidden: boolean; createdAt: string }[]) || [])
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
   const c = parseContent(site.content);
-  const yes = site.rsvps.filter((r) => r.attending);
+  const yes = rsvps.filter((r) => r.attending);
   const headcount = yes.reduce((n, r) => n + r.guests, 0);
   const meals = yes.reduce<Record<string, number>>((m, r) => {
     if (r.meal) m[r.meal] = (m[r.meal] ?? 0) + r.guests;
@@ -89,7 +97,7 @@ export default async function Guests({ params }: { params: Promise<{ id: string 
                   </td>
                 </tr>
               )}
-              {site.rsvps.map((r) => (
+              {rsvps.map((r: { id: string; name: string; email: string | null; attending: boolean; guests: number; meal: string | null; message: string | null; createdAt: string }) => (
                 <tr key={r.id} className="border-b border-line last:border-0">
                   <td className="px-5 py-3">
                     <div className="font-medium">{r.name}</div>
@@ -105,7 +113,7 @@ export default async function Guests({ params }: { params: Promise<{ id: string 
                   <td className="px-5 py-3">{r.attending ? r.guests : "—"}</td>
                   <td className="px-5 py-3">{r.meal ?? "—"}</td>
                   <td className="max-w-xs px-5 py-3 text-stone">{r.message}</td>
-                  <td className="whitespace-nowrap px-5 py-3 text-stone">{r.createdAt.toLocaleDateString("en-US", { month: "short", day: "numeric" })}</td>
+                  <td className="whitespace-nowrap px-5 py-3 text-stone">{new Date(r.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</td>
                   <td className="px-5 py-3 text-right">
                     <DeleteRsvp id={r.id} name={r.name} />
                   </td>
@@ -122,7 +130,7 @@ export default async function Guests({ params }: { params: Promise<{ id: string 
         <h2 className="mt-16 font-serif text-4xl">Guestbook</h2>
         <p className="mb-6 mt-1 text-stone">Notes guests left on your site. Hidden notes don&rsquo;t appear publicly.</p>
         <WishModeration
-          wishes={site.wishes.map((w) => ({ id: w.id, name: w.name, message: w.message, hidden: w.hidden, flagged: w.flagged, createdAt: w.createdAt.toISOString() }))}
+          wishes={wishes.map((w: { id: string; name: string; message: string; hidden: boolean; flagged?: boolean; createdAt: string }) => ({ id: w.id, name: w.name, message: w.message, hidden: w.hidden, flagged: w.flagged, createdAt: new Date(w.createdAt).toISOString() }))}
         />
       </main>
     </>

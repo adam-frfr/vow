@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth";
-import { db } from "@/lib/db";
+import { supabase } from "@/lib/supabase";
 import { parseContent, parseCustomization } from "@/lib/content";
 import { getTheme, googleFontsHref, THEMES } from "@/lib/themes";
 import { isBuilderTheme } from "@/lib/custom-theme";
@@ -18,16 +18,24 @@ export default async function EditSite({ params, searchParams }: { params: Promi
   const { paid } = await searchParams;
   // Back from Stripe: confirm the payment directly (works even before the webhook is set up).
   const justPaid = paid && paid !== "cancelled" ? await confirmSession(paid, user.id) : false;
-  const site = await db.site.findFirst({
-    where: { id, userId: user.id },
-    include: {
-      photos: { orderBy: { position: "asc" } },
-      wishes: { where: { hidden: false }, orderBy: { createdAt: "desc" }, take: 60 },
-    },
-  });
+  
+  const { data: site } = await supabase
+    .from("Site")
+    .select("*, photos:Photo(*), wishes:Wish(*)")
+    .eq("id", id)
+    .eq("userId", user.id)
+    .maybeSingle();
+
   if (!site) notFound();
   const pay = await payConfig();
   const catalog = await getCatalog();
+
+  const sortedPhotos = ((site.photos as { id: string; url: string; position: number }[]) || [])
+    .sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
+  const activeWishes = ((site.wishes as { id: string; name: string; message: string; hidden: boolean; createdAt: string }[]) || [])
+    .filter((w) => !w.hidden)
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .slice(0, 60);
 
   return (
     <>
@@ -38,8 +46,8 @@ export default async function EditSite({ params, searchParams }: { params: Promi
         pay={{ ...pay, justPaid, cancelled: paid === "cancelled" }}
         initialContent={parseContent(site.content)}
         initialCustomization={parseCustomization(site.customization)}
-        initialPhotos={site.photos.map((p) => ({ id: p.id, url: p.url }))}
-        initialWishes={site.wishes.map((w) => ({ id: w.id, name: w.name, message: w.message, createdAt: w.createdAt.toISOString() }))}
+        initialPhotos={sortedPhotos.map((p) => ({ id: p.id, url: p.url }))}
+        initialWishes={activeWishes.map((w) => ({ id: w.id, name: w.name, message: w.message, createdAt: new Date(w.createdAt).toISOString() }))}
       />
       </CatalogProvider>
     </>

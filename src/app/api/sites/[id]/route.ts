@@ -3,7 +3,7 @@ import { needsPremium } from "@/lib/stripe";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { getOwnedSite } from "@/lib/auth";
-import { db } from "@/lib/db";
+import { supabase } from "@/lib/supabase";
 import { contentSchema, customizationSchema, RESERVED_SLUGS, slugify } from "@/lib/content";
 import { isThemeId } from "@/lib/themes";
 import { deleteStored } from "@/lib/storage";
@@ -42,21 +42,32 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     slug = slugify(body.slug);
     if (slug.length < 3) return NextResponse.json({ error: "Link must be at least 3 characters." }, { status: 400 });
     if (RESERVED_SLUGS.has(slug)) return NextResponse.json({ error: "That link is reserved." }, { status: 400 });
-    const taken = await db.site.findUnique({ where: { slug }, select: { id: true } });
+    const { data: taken } = await supabase.from("Site").select("id").eq("slug", slug).maybeSingle();
     if (taken && taken.id !== site.id) return NextResponse.json({ error: "That link is already taken." }, { status: 409 });
   }
 
-  const updated = await db.site.update({
-    where: { id: site.id },
-    data: {
-      themeId: body.themeId,
-      content: body.content ? JSON.stringify(body.content) : undefined,
-      customization: body.customization ? JSON.stringify(body.customization) : undefined,
-      published: body.published,
-      slug,
-      passwordHash: body.password === undefined ? undefined : body.password === null ? null : await bcrypt.hash(body.password, 10),
-    },
-  });
+  const updateData: Record<string, unknown> = { updatedAt: new Date().toISOString() };
+  if (body.themeId !== undefined) updateData.themeId = body.themeId;
+  if (body.content !== undefined) updateData.content = JSON.stringify(body.content);
+  if (body.customization !== undefined) updateData.customization = JSON.stringify(body.customization);
+  if (body.published !== undefined) updateData.published = body.published;
+  if (slug !== undefined) updateData.slug = slug;
+  if (body.password !== undefined) {
+    updateData.passwordHash = body.password === null ? null : await bcrypt.hash(body.password, 10);
+  }
+
+  const { data: updated, error } = await supabase
+    .from("Site")
+    .update(updateData)
+    .eq("id", site.id)
+    .select()
+    .single();
+
+  if (error || !updated) {
+    console.error("[update site error]", error);
+    return NextResponse.json({ error: "Could not save changes." }, { status: 500 });
+  }
+
   return NextResponse.json({
     ok: true,
     slug: updated.slug,
@@ -70,8 +81,10 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
   const { id } = await params;
   const site = await getOwnedSite(id);
   if (!site) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  const photos = await db.photo.findMany({ where: { siteId: site.id } });
-  await db.site.delete({ where: { id: site.id } });
-  await Promise.all(photos.map((p) => deleteStored(p.storageKey)));
+  const { data: photos } = await supabase.from("Photo").select("storageKey").eq("siteId", site.id);
+  await supabase.from("Site").delete().eq("id", site.id);
+  if (photos && photos.length > 0) {
+    await Promise.all(photos.map((p) => deleteStored(p.storageKey)));
+  }
   return NextResponse.json({ ok: true });
 }

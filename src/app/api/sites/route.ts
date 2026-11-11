@@ -3,7 +3,7 @@ import { getCatalog } from "@/lib/catalog";
 import { catalogProblem } from "@/lib/locks";
 import { z } from "zod";
 import { getUserId } from "@/lib/auth";
-import { db } from "@/lib/db";
+import { supabase } from "@/lib/supabase";
 import { RESERVED_SLUGS, slugify, starterContent } from "@/lib/content";
 import { isThemeId } from "@/lib/themes";
 
@@ -28,21 +28,31 @@ export async function POST(req: Request) {
 
   const base = slugify(parsed.data.slug || `${partner1}-and-${partner2}`) || "our-wedding";
   const slug = await uniqueSlug(base);
+  const id = "s_" + Date.now() + "_" + Math.random().toString(36).slice(2, 7);
 
-  const site = await db.site.create({
-    data: {
-      userId,
-      themeId,
-      slug,
-      content: JSON.stringify(starterContent(partner1, partner2, date)),
-    },
-  });
+  const { data: site, error } = await supabase.from("Site").insert({
+    id,
+    userId,
+    themeId,
+    slug,
+    content: JSON.stringify(starterContent(partner1, partner2, date)),
+    customization: "{}",
+    published: false,
+  }).select("id, slug").single();
+
+  if (error || !site) {
+    console.error("[create site error]", error);
+    return NextResponse.json({ error: "Could not create site." }, { status: 500 });
+  }
+
   return NextResponse.json({ id: site.id, slug: site.slug });
 }
 
 async function uniqueSlug(base: string) {
   let slug = RESERVED_SLUGS.has(base) ? `${base}-wedding` : base;
-  for (let i = 2; await db.site.findUnique({ where: { slug }, select: { id: true } }); i++) {
+  for (let i = 2; ; i++) {
+    const { data } = await supabase.from("Site").select("id").eq("slug", slug).maybeSingle();
+    if (!data) break;
     slug = `${base}-${i}`;
   }
   return slug;

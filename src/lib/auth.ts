@@ -1,7 +1,6 @@
 import "server-only";
 import { cookies } from "next/headers";
 import { notFound, redirect } from "next/navigation";
-import { db } from "./db";
 import { supabase } from "./supabase";
 import { SESSION_COOKIE, verifySession } from "./session";
 
@@ -55,5 +54,6 @@ export async function adminOrNull() {
 export async function getOwnedSite(siteId: string) {
   const userId = await getUserId();
   if (!userId) return null;
-  return db.site.findFirst({ where: { id: siteId, userId } });
+  const { data } = await supabase.from("Site").select("*").eq("id", siteId).eq("userId", userId).maybeSingle();
+  return data;
 }

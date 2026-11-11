@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { db } from "@/lib/db";
+import { supabase } from "@/lib/supabase";
 import { parseContent } from "@/lib/content";
 import { guard } from "@/lib/security";
 import { getUserId } from "@/lib/auth";
@@ -21,8 +21,14 @@ export async function POST(req: Request, { params }: { params: Promise<{ slug: s
     return NextResponse.json({ error: "Too many responses. Please try again shortly." }, { status: 429 });
   }
   const { slug } = await params;
-  const site = await db.site.findUnique({ where: { slug }, include: { user: { select: { blocked: true } } } });
-  if (!site || !site.published || site.user.blocked) return NextResponse.json({ error: "This invitation isn't accepting RSVPs." }, { status: 404 });
+  const { data: site } = await supabase
+    .from("Site")
+    .select("*, user:User(blocked)")
+    .eq("slug", slug)
+    .maybeSingle();
+
+  const isBlocked = (site?.user as { blocked?: boolean })?.blocked;
+  if (!site || !site.published || isBlocked) return NextResponse.json({ error: "This invitation isn't accepting RSVPs." }, { status: 404 });
   if (!(await hasSiteAccess(site, await getUserId()))) return NextResponse.json({ error: "This site is private." }, { status: 403 });
 
   const parsed = schema.safeParse(await req.json().catch(() => null));
@@ -31,16 +37,17 @@ export async function POST(req: Request, { params }: { params: Promise<{ slug: s
   const content = parseContent(site.content);
   if (content.hidden.includes("rsvp")) return NextResponse.json({ error: "RSVPs are closed." }, { status: 400 });
 
-  await db.rsvp.create({
-    data: {
-      siteId: site.id,
-      name: r.name,
-      email: r.email,
-      attending: r.attending,
-      guests: r.attending ? Math.min(r.guests, content.rsvp.maxGuests) : 0,
-      meal: r.attending && r.meal && content.rsvp.mealOptions.includes(r.meal) ? r.meal : null,
-      message: r.message,
-    },
+  const id = "r_" + Date.now() + "_" + Math.random().toString(36).slice(2, 7);
+  await supabase.from("Rsvp").insert({
+    id,
+    siteId: site.id,
+    name: r.name,
+    email: r.email,
+    attending: r.attending,
+    guests: r.attending ? Math.min(r.guests, content.rsvp.maxGuests) : 0,
+    meal: r.attending && r.meal && content.rsvp.mealOptions.includes(r.meal) ? r.meal : null,
+    message: r.message,
   });
+
   return NextResponse.json({ ok: true });
 }

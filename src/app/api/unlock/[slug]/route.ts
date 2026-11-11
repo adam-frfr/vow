@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
-import { db } from "@/lib/db";
+import { supabase } from "@/lib/supabase";
 import { guard } from "@/lib/security";
 import { accessCookie, accessCookieOptions, signSiteAccess } from "@/lib/site-access";
 
@@ -11,7 +11,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ slug: s
     return NextResponse.json({ error: "Too many attempts. Please wait a minute." }, { status: 429 });
   }
   const { slug } = await params;
-  const site = await db.site.findUnique({ where: { slug } });
+  const { data: site } = await supabase.from("Site").select("id, published, passwordHash").eq("slug", slug).maybeSingle();
   if (!site || !site.published || !site.passwordHash) return NextResponse.json({ error: "Not found" }, { status: 404 });
   const body = z.object({ password: z.string().min(1).max(200) }).safeParse(await req.json().catch(() => null));
   if (!body.success || !(await bcrypt.compare(body.data.password, site.passwordHash))) {

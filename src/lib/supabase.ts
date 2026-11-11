@@ -6,3 +6,4 @@ const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PU
 export const supabase = createClient(supabaseUrl, supabaseKey, {
   auth: { persistSession: false },
 });
+

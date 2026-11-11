@@ -1,6 +1,6 @@
 import "server-only";
 import { decrypt, encrypt } from "./crypto";
-import { db } from "./db";
+import { supabase } from "./supabase";
 
 /** Everything the admin can change from /admin/settings. */
 export const SETTINGS = {
@@ -30,9 +30,13 @@ let cache: { at: number; map: Map<string, string> } | null = null;
 
 async function all() {
   if (cache && Date.now() - cache.at < 5_000) return cache.map;
-  const rows = await db.setting.findMany();
-  cache = { at: Date.now(), map: new Map(rows.map((r) => [r.key, r.value])) };
-  return cache.map;
+  try {
+    const { data: rows } = await supabase.from("Setting").select("key, value");
+    cache = { at: Date.now(), map: new Map((rows ?? []).map((r: { key: string; value: string }) => [r.key, r.value])) };
+    return cache.map;
+  } catch {
+    return new Map<string, string>();
+  }
 }
 
 export async function getSetting(key: SettingKey): Promise<string> {
@@ -46,7 +50,7 @@ export const getInt = async (key: SettingKey) => Number.parseInt(await getSettin
 
 export async function setSetting(key: SettingKey, value: string) {
   const stored = SETTINGS[key].secret && value ? encrypt(value) : value;
-  await db.setting.upsert({ where: { key }, create: { key, value: stored }, update: { value: stored } });
+  await supabase.from("Setting").upsert({ key, value: stored, updatedAt: new Date().toISOString() });
   cache = null;
 }
 
@@ -73,6 +77,6 @@ export async function getJson<T>(key: string, fallback: T): Promise<T> {
 
 export async function setJson(key: string, value: unknown) {
   const v = JSON.stringify(value);
-  await db.setting.upsert({ where: { key }, create: { key, value: v }, update: { value: v } });
+  await supabase.from("Setting").upsert({ key, value: v, updatedAt: new Date().toISOString() });
   cache = null;
 }

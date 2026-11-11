@@ -6,7 +6,7 @@ import "@/components/invite/invite.css";
 import { InviteSite } from "@/components/invite/InviteSite";
 import { PasswordGate } from "@/components/invite/PasswordGate";
 import { getUserId } from "@/lib/auth";
-import { db } from "@/lib/db";
+import { supabase } from "@/lib/supabase";
 import { formatDate, parseContent, parseCustomization } from "@/lib/content";
 import { hasSiteAccess } from "@/lib/site-access";
 import { helperAvailable } from "@/lib/helper";
@@ -16,16 +16,30 @@ import type { InviteContent } from "@/lib/content";
 import Link from "next/link";
 import { getTheme, googleFontsHref, img } from "@/lib/themes";
 
-const load = cache(async (slug: string) =>
-  db.site.findUnique({
-    where: { slug },
-    include: {
-      photos: { orderBy: { position: "asc" } },
-      wishes: { where: { hidden: false }, orderBy: { createdAt: "desc" }, take: 60 },
-      user: { select: { blocked: true } },
-    },
-  }),
-);
+const load = cache(async (slug: string) => {
+  const { data: site } = await supabase
+    .from("Site")
+    .select("*, photos:Photo(*), wishes:Wish(*), user:User(blocked)")
+    .eq("slug", slug)
+    .maybeSingle();
+
+  if (!site) return null;
+
+  const photos = ((site.photos as { id: string; url: string; position: number }[]) || [])
+    .sort((a, b) => (a.position ?? 0) - (b.position ?? 0));
+  const wishes = ((site.wishes as { id: string; name: string; message: string; hidden: boolean; createdAt: string }[]) || [])
+    .filter((w) => !w.hidden)
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .slice(0, 60)
+    .map((w) => ({ ...w, createdAt: new Date(w.createdAt) }));
+
+  return {
+    ...site,
+    photos,
+    wishes,
+    user: (site.user as { blocked?: boolean }) || null,
+  };
+});
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
@@ -92,8 +106,8 @@ export default async function PublicInvite({ params, searchParams }: { params: P
         themeId={site.themeId}
         content={content}
         customization={cz}
-        photos={site.photos.map((p) => p.url)}
-        wishes={site.wishes.map((w) => ({ id: w.id, name: w.name, message: w.message, createdAt: w.createdAt.toISOString() }))}
+        photos={site.photos.map((p: { url: string }) => p.url)}
+        wishes={site.wishes.map((w: { id: string; name: string; message: string; createdAt: Date }) => ({ id: w.id, name: w.name, message: w.message, createdAt: w.createdAt.toISOString() }))}
         mode={site.published ? "live" : "preview"}
         slug={site.slug}
         hideBranding={site.premium}

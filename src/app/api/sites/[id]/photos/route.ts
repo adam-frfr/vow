@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getOwnedSite } from "@/lib/auth";
-import { db } from "@/lib/db";
+import { supabase } from "@/lib/supabase";
 import { MAX_UPLOAD_BYTES, sniffImageType, storeFile } from "@/lib/storage";
 
 const MAX_PHOTOS = 40;
@@ -14,7 +14,12 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const files = (form?.getAll("files") ?? []).filter((f): f is File => f instanceof File);
   if (!files.length) return NextResponse.json({ error: "No files received." }, { status: 400 });
 
-  const count = await db.photo.count({ where: { siteId: site.id } });
+  const { count: rawCount } = await supabase
+    .from("Photo")
+    .select("*", { count: "exact", head: true })
+    .eq("siteId", site.id);
+  const count = rawCount ?? 0;
+
   if (count + files.length > MAX_PHOTOS) {
     return NextResponse.json({ error: `You can upload up to ${MAX_PHOTOS} photos.` }, { status: 400 });
   }
@@ -26,7 +31,15 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const type = sniffImageType(bytes);
     if (!type) return NextResponse.json({ error: `${file.name} isn't a JPG, PNG or WebP image.` }, { status: 400 });
     const { key, url } = await storeFile(site.id, type, bytes);
-    created.push(await db.photo.create({ data: { siteId: site.id, url, storageKey: key, position: count + i } }));
+    const photoId = "p_" + Date.now() + "_" + Math.random().toString(36).slice(2, 7);
+    const { data: p } = await supabase.from("Photo").insert({
+      id: photoId,
+      siteId: site.id,
+      url,
+      storageKey: key,
+      position: count + i,
+    }).select().single();
+    if (p) created.push(p);
   }
   return NextResponse.json({ photos: created.map((p) => ({ id: p.id, url: p.url })) });
 }
