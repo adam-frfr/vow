@@ -36,11 +36,11 @@ export default async function AdminHome() {
   ]);
 
   const logins14 = (rawLogins14 ?? []) as { createdAt: string; ok: boolean }[];
-  const events24: any[] = [];
+  const events24: Array<{ id: string; ipHash: string; kind: string; scope?: string | null; detail?: string | null; createdAt: string | Date }> = [];
   const active24 = logins14.filter((l) => l.ok && l.createdAt >= d1);
   const active7 = logins14.filter((l) => l.ok && l.createdAt >= d7);
   const ai24 = 0;
-  const paid: any[] = [];
+  const paid: Array<{ amount: number; currency?: string }> = [];
 
   // Sign-ins per day (successful vs failed) for the last 14 days.
   const days = Array.from({ length: 14 }, (_, i) => {
@@ -147,7 +147,7 @@ export default async function AdminHome() {
                   {e.scope && <span className="text-stone"> · {e.scope}</span>}
                   {e.detail && <span className="block truncate text-xs text-stone">{e.detail}</span>}
                 </span>
-                <span className="shrink-0 text-xs text-stone">{fmt(e.createdAt)}</span>
+                <span className="shrink-0 text-xs text-stone">{fmt(typeof e.createdAt === "string" ? new Date(e.createdAt) : e.createdAt)}</span>
               </li>
             ))}
           </ul>

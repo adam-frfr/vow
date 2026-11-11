@@ -19,10 +19,19 @@ export default async function AdminUsers({ searchParams }: { searchParams: Promi
   }
 
   const { data: rawUsers } = await query;
-  const users = (rawUsers ?? []).map((u: any) => ({
+  const users = (((rawUsers ?? []) as Array<Record<string, unknown>>).map((u) => ({
     ...u,
-    _count: { sites: u.sites?.length ?? 0 },
-  }));
+    _count: { sites: Array.isArray(u.sites) ? u.sites.length : 0 },
+  }))) as unknown as Array<{
+    id: string;
+    email: string;
+    name?: string | null;
+    isAdmin: boolean;
+    blocked: boolean;
+    createdAt: string | Date;
+    lastLoginAt?: string | Date | null;
+    _count: { sites: number };
+  }>;
 
   const failedBy = new Map<string, number>();
 
@@ -78,9 +87,9 @@ export default async function AdminUsers({ searchParams }: { searchParams: Promi
                           {u._count.sites}
                         </a>
                       </td>
-                      <td className="py-3 pr-3 text-xs">{fmt(u.createdAt)}</td>
+                      <td className="py-3 pr-3 text-xs">{fmt(typeof u.createdAt === "string" ? new Date(u.createdAt) : u.createdAt)}</td>
                       <td className="py-3 pr-3 text-xs">
-                        {fmt(u.lastLoginAt)}
+                        {fmt(typeof u.lastLoginAt === "string" ? new Date(u.lastLoginAt) : u.lastLoginAt)}
                         {fails > 0 && <span className="block text-red-700">{fails} failed today</span>}
                       </td>
                       <td className="py-3 pr-3 text-xs">

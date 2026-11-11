@@ -20,15 +20,29 @@ export default async function AdminSites({ searchParams }: { searchParams: Promi
   }
 
   const { data: rawSites } = await query;
-  const sites = (rawSites ?? []).map((s: any) => ({
+  const sites = (((rawSites ?? []) as Array<Record<string, unknown>>).map((s) => ({
     ...s,
-    user: s.user ?? { email: "", blocked: false },
+    user: (s.user as { email?: string; blocked?: boolean } | null) ?? { email: "", blocked: false },
     _count: {
-      rsvps: s.rsvps?.length ?? 0,
-      wishes: s.wishes?.length ?? 0,
-      photos: s.photos?.length ?? 0,
+      rsvps: Array.isArray(s.rsvps) ? s.rsvps.length : 0,
+      wishes: Array.isArray(s.wishes) ? s.wishes.length : 0,
+      photos: Array.isArray(s.photos) ? s.photos.length : 0,
     },
-  }));
+  }))) as unknown as Array<{
+    id: string;
+    slug: string;
+    title: string;
+    content: string;
+    themeId: string;
+    published: boolean;
+    premium: boolean;
+    passcode: string | null;
+    passwordHash?: string | null;
+    createdAt: string | Date;
+    updatedAt: string | Date;
+    user: { email: string; blocked: boolean };
+    _count: { rsvps: number; wishes: number; photos: number };
+  }>;
 
   return (
     <div className="space-y-6">
@@ -74,7 +88,7 @@ export default async function AdminSites({ searchParams }: { searchParams: Promi
                       <td className="py-3 pr-3 text-xs">
                         {s._count.rsvps} RSVPs · {s._count.wishes} notes · {s._count.photos} photos
                       </td>
-                      <td className="py-3 pr-3 text-xs">{fmt(s.updatedAt)}</td>
+                      <td className="py-3 pr-3 text-xs">{fmt(typeof s.updatedAt === "string" ? new Date(s.updatedAt) : s.updatedAt)}</td>
                       <td className="py-3">
                         <div className="flex flex-wrap justify-end gap-1.5">
                           {s.published && (

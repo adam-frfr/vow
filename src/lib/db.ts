@@ -6,7 +6,7 @@ import { PrismaClient } from "@prisma/client";
  * connections (the pooler multiplexes them) and a generous wait, instead of
  * one connection that queues every query and times out (P2024).
  */
-function databaseUrl(raw = process.env.DATABASE_URL) {
+function databaseUrl(raw = process.env.DATABASE_URL || "postgresql://postgres.rzltilisyyfpraalscjx:JBhl61olMP6bgnku@aws-0-ap-northeast-1.pooler.supabase.com:6543/postgres?pgbouncer=true") {
   if (!raw) return undefined;
   try {
     const u = new URL(raw);
