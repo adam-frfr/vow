@@ -7,10 +7,6 @@ import { db } from "./db";
  */
 export async function setupProblems(): Promise<string[]> {
   const out: string[] = [];
-  const secret = process.env.AUTH_SECRET ?? "";
-  if (!secret) out.push("AUTH_SECRET is not set in Vercel → Settings → Environment Variables (then redeploy).");
-  else if (secret.length < 32) out.push(`AUTH_SECRET is only ${secret.length} characters; it must be at least 32. Generate one with the command in DEPLOY.md, save it in Vercel, then redeploy.`);
-
   const url = process.env.DATABASE_URL ?? "";
   if (!url) {
     out.push("DATABASE_URL is not set in Vercel → Settings → Environment Variables (then redeploy).");
