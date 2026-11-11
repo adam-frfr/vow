@@ -41,10 +41,10 @@ export default async function Home() {
     .filter((tpl) => !!tpl)
     .map((tpl) => ({ tpl, theme: THEMES.find((t) => templateOf(t) === tpl.id)! }))
     .filter((x) => x.theme);
-  const fonts = [...new Set(THEMES.slice(0, 40).map((t) => t.fonts.script || t.fonts.display))];
+  const fonts = [...new Set(showcase.map((s) => s.theme.fonts.script || s.theme.fonts.display).filter(Boolean))];
   return (
     <>
-      <link rel="stylesheet" href={googleFontsHref([...fonts, ...showcase.map((s) => s.theme.fonts.script || s.theme.fonts.display)])} precedence="default" />
+      <link rel="stylesheet" href={googleFontsHref(fonts)} precedence="default" />
       <SiteHeader />
 
       <section className="lp-hero">
