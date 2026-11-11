@@ -30,11 +30,14 @@ async function call(path: string, key: string, init: RequestInit = {}) {
   }
 }
 
-function explain(status: number) {
-  if (status === 401 || status === 403) return new AiError("The AI key is not valid. The site admin needs to update it.", 503);
+async function explain(res: Response) {
+  const status = res.status;
+  const body = (await res.json().catch(() => null)) as { error?: { message?: string; code?: string } } | null;
+  const msg = body?.error?.message;
+  if (status === 401 || status === 403) return new AiError(`Groq authentication failed: ${msg || "Invalid API key"}. Please check /admin/settings.`, 503);
   if (status === 429) return new AiError("The writing assistant is busy right now. Please try again in a minute.", 429);
-  if (status === 404) return new AiError("The AI model isn't available. The site admin needs to pick another model.", 503);
-  return new AiError("The writing assistant had a problem. Please try again.", 502);
+  if (status === 404) return new AiError(`The AI model isn't available (${msg || "Not found"}). Please pick a valid model in /admin/settings.`, 503);
+  return new AiError(msg ? `Groq error: ${msg}` : "The writing assistant had a problem. Please try again.", 502);
 }
 
 export interface ChatOpts {
@@ -64,7 +67,7 @@ export async function chat(o: ChatOpts): Promise<{ text: string; tokens: number 
       ...(o.json ? { response_format: { type: "json_object" } } : {}),
     }),
   });
-  if (!res.ok) throw explain(res.status);
+  if (!res.ok) throw await explain(res);
   const data = (await res.json().catch(() => null)) as { choices?: { message?: { content?: string } }[]; usage?: { total_tokens?: number } } | null;
   const text = data?.choices?.[0]?.message?.content?.trim();
   if (!text) throw new AiError("The writing assistant returned nothing. Please try again.", 502);
@@ -88,7 +91,7 @@ export async function chatJson<T>(o: Omit<ChatOpts, "json">): Promise<{ data: T;
 /** Check a key + model for the admin's "Test connection". */
 export async function testGroq(key: string, model: string) {
   const res = await call("/models", key);
-  if (!res.ok) throw explain(res.status);
+  if (!res.ok) throw await explain(res);
   const list = ((await res.json().catch(() => null)) as { data?: { id: string }[] } | null)?.data?.map((m) => m.id) ?? [];
   if (list.length && !list.includes(model)) {
     throw new AiError(`The key works, but the model "${model}" isn't available. Try one of: ${list.filter((m) => !/whisper|guard|tts/i.test(m)).slice(0, 6).join(", ")}`, 400);
