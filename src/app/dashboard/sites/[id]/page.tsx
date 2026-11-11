@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { parseContent, parseCustomization } from "@/lib/content";
-import { getTheme, googleFontsHref, THEMES } from "@/lib/themes";
+import { getTheme, googleFontsHref } from "@/lib/themes";
 import { isBuilderTheme } from "@/lib/custom-theme";
 import { Editor } from "./Editor";
 import { confirmSession, payConfig } from "@/lib/stripe";
@@ -37,9 +37,11 @@ export default async function EditSite({ params, searchParams }: { params: Promi
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .slice(0, 60);
 
+  const activeTheme = getTheme(site.themeId);
+
   return (
     <>
-      <link rel="stylesheet" href={googleFontsHref(THEMES.map((t) => t.fonts.script || t.fonts.display))} precedence="default" />
+      <link rel="stylesheet" href={googleFontsHref([activeTheme.fonts.display, activeTheme.fonts.body, activeTheme.fonts.script])} precedence="default" />
       <CatalogProvider catalog={catalog} siteTheme={isBuilderTheme(site.themeId) ? getTheme(site.themeId) : undefined}>
       <Editor
         site={{ id: site.id, slug: site.slug, themeId: site.themeId, published: site.published, isProtected: !!site.passwordHash, premium: site.premium || justPaid }}

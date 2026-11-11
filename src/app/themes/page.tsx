@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { SiteHeader } from "@/components/ui/SiteHeader";
 import { ThemeGallery } from "./ThemeGallery";
-import { googleFontsHref } from "@/lib/themes";
 import { getCatalog } from "@/lib/catalog";
 import { visibleCollections, visibleTemplates, visibleThemes } from "@/lib/catalog-shared";
 
@@ -14,7 +13,6 @@ export default async function ThemesPage({ searchParams }: { searchParams: Promi
   const TEMPLATES = visibleTemplates(catalog);
   return (
     <>
-      <link rel="stylesheet" href={googleFontsHref(THEMES.map((t) => t.fonts.script || t.fonts.display))} precedence="default" />
       <SiteHeader />
       <main className="mx-auto max-w-7xl px-5 pb-24 pt-14">
         <div className="text-center">
