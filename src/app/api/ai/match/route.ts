@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { matchThemes } from "@/lib/ai";
 import { getUserId } from "@/lib/auth";
-import { db } from "@/lib/db";
+import { supabase } from "@/lib/supabase";
 import { AiError, recordAi } from "@/lib/groq";
 import { guard } from "@/lib/security";
 import { getBool, getInt, getSetting } from "@/lib/settings";
@@ -21,7 +21,12 @@ export async function POST(req: Request) {
   }
   const since = new Date();
   since.setHours(0, 0, 0, 0);
-  if ((await db.aiUsage.count({ where: { userId, createdAt: { gte: since } } })) >= (await getInt("ai.dailyLimit"))) {
+  const { count: usageCount } = await supabase
+    .from("AiUsage")
+    .select("*", { count: "exact", head: true })
+    .eq("userId", userId)
+    .gte("createdAt", since.toISOString());
+  if ((usageCount ?? 0) >= (await getInt("ai.dailyLimit"))) {
     return NextResponse.json({ error: "You've used today's AI requests. They reset at midnight." }, { status: 429 });
   }
   try {

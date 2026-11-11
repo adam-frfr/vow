@@ -30,6 +30,7 @@ export async function POST(req: Request) {
   const slug = await uniqueSlug(base);
   const id = "s_" + Date.now() + "_" + Math.random().toString(36).slice(2, 7);
 
+  const now = new Date().toISOString();
   const { data: site, error } = await supabase.from("Site").insert({
     id,
     userId,
@@ -38,11 +39,13 @@ export async function POST(req: Request) {
     content: JSON.stringify(starterContent(partner1, partner2, date)),
     customization: "{}",
     published: false,
+    createdAt: now,
+    updatedAt: now,
   }).select("id, slug").single();
 
   if (error || !site) {
     console.error("[create site error]", error);
-    return NextResponse.json({ error: "Could not create site." }, { status: 500 });
+    return NextResponse.json({ error: error?.message ? `Could not create site: ${error.message}` : "Could not create site." }, { status: 500 });
   }
 
   return NextResponse.json({ id: site.id, slug: site.slug });

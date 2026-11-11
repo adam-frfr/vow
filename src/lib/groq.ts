@@ -1,5 +1,5 @@
 import "server-only";
-import { db } from "./db";
+import { supabase } from "./supabase";
 import { getBool, getInt, getSetting } from "./settings";
 
 /** Groq's OpenAI-compatible endpoint. GROQ_BASE_URL exists only for local testing against a mock. */
@@ -110,14 +110,26 @@ export async function assertAiAllowed(userId: string, site: { id: string; premiu
   if ((await getBool("pay.enabled")) && (await getSetting("pay.features")).split(",").includes("ai") && !site.premium) {
     throw new AiError("The writing assistant is part of Premium. Upgrade this site to use it.", 402);
   }
-  const used = await db.aiUsage.count({ where: { userId, createdAt: { gte: startOfDay() } } });
-  if (used >= (await getInt("ai.dailyLimit"))) throw new AiError("You've used today's AI requests. They reset at midnight.", 429);
+  const since = startOfDay().toISOString();
+  const { count: used } = await supabase.from("AiUsage").select("*", { count: "exact", head: true }).eq("userId", userId).gte("createdAt", since);
+  if ((used ?? 0) >= (await getInt("ai.dailyLimit"))) throw new AiError("You've used today's AI requests. They reset at midnight.", 429);
 }
 
 export async function recordAi(feature: string, opts: { userId?: string; siteId?: string; tokens?: number; ok?: boolean }) {
-  await db.aiUsage.create({ data: { feature, userId: opts.userId, siteId: opts.siteId, tokens: opts.tokens ?? 0, ok: opts.ok ?? true } }).catch(() => null);
+  const id = "ai_" + Date.now() + "_" + Math.random().toString(36).slice(2, 7);
+  await supabase.from("AiUsage").insert({
+    id,
+    feature,
+    userId: opts.userId,
+    siteId: opts.siteId,
+    tokens: opts.tokens ?? 0,
+    ok: opts.ok ?? true,
+    createdAt: new Date().toISOString(),
+  });
 }
 
 export async function guestQuestionsToday(siteId: string) {
-  return db.aiUsage.count({ where: { siteId, feature: "guest-helper", createdAt: { gte: startOfDay() } } });
+  const since = startOfDay().toISOString();
+  const { count } = await supabase.from("AiUsage").select("*", { count: "exact", head: true }).eq("siteId", siteId).eq("feature", "guest-helper").gte("createdAt", since);
+  return count ?? 0;
 }
