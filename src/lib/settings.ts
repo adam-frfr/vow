@@ -28,8 +28,12 @@ export type SettingKey = keyof typeof SETTINGS;
 
 let cache: { at: number; map: Map<string, string> } | null = null;
 
+export function invalidateSettingsCache() {
+  cache = null;
+}
+
 async function all() {
-  if (cache && Date.now() - cache.at < 5_000) return cache.map;
+  if (cache && Date.now() - cache.at < 60_000) return cache.map;
   try {
     const { data: rows } = await supabase.from("Setting").select("key, value");
     cache = { at: Date.now(), map: new Map((rows ?? []).map((r: { key: string; value: string }) => [r.key, r.value])) };

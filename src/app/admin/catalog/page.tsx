@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { getCatalog, getDraftThemes } from "@/lib/catalog";
-import { db } from "@/lib/db";
+import { supabase } from "@/lib/supabase";
 import { TEMPLATES, templateOf, THEMES } from "@/lib/themes";
 import { CatalogAdmin } from "./CatalogAdmin";
 
@@ -9,9 +9,15 @@ export const dynamic = "force-dynamic";
 export default async function AdminCatalog() {
   const cat = await getCatalog();
   const drafts = await getDraftThemes();
-  const builderRows = await db.customTheme.findMany({ select: { id: true, status: true } });
-  const status = new Map(builderRows.map((r) => [r.id, r.status]));
-  const usage = new Map((await db.site.groupBy({ by: ["themeId"], _count: { _all: true } })).map((g) => [g.themeId, g._count._all]));
+  const [{ data: builderRows }, { data: siteRows }] = await Promise.all([
+    supabase.from("CustomTheme").select("id, status"),
+    supabase.from("Site").select("themeId"),
+  ]);
+  const status = new Map((builderRows ?? []).map((r: { id: string; status: string }) => [r.id, r.status]));
+  const usage = new Map<string, number>();
+  for (const s of siteRows ?? []) {
+    if (s.themeId) usage.set(s.themeId, (usage.get(s.themeId) ?? 0) + 1);
+  }
   const all = [...drafts, ...THEMES];
   const count = new Map<string, number>();
   for (const t of all) count.set(templateOf(t), (count.get(templateOf(t)) ?? 0) + 1);

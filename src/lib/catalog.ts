@@ -1,6 +1,6 @@
 import "server-only";
 import type { Family, Floral, FloralKind } from "./assets";
-import { db } from "./db";
+import { supabase } from "./supabase";
 import { getBool, getJson, getSetting, setJson } from "./settings";
 import { applyCatalog, EMPTY_CATALOG, type Catalog, type CollectionInfo } from "./catalog-shared";
 import { themeInputSchema, toTheme } from "./custom-theme";
@@ -59,15 +59,18 @@ function artFrom(r: { id: string; name: string; kind: string; w: number; h: numb
 }
 
 async function load() {
-  const [hidden, meta, artRows, themeRows, sections, payOn, stripeKey] = await Promise.all([
+  const [hidden, meta, artRes, themeRes, sectionRes, payOn, stripeKey] = await Promise.all([
     getJson<Hidden>(HIDDEN_KEY, { themes: [], designs: [], art: [] }),
     getMeta(),
-    db.artAsset.findMany({ orderBy: { createdAt: "desc" } }),
-    db.customTheme.findMany({ orderBy: { createdAt: "desc" } }),
-    db.librarySection.findMany({ orderBy: [{ position: "asc" }, { createdAt: "asc" }] }),
+    supabase.from("ArtAsset").select("*").order("createdAt", { ascending: false }),
+    supabase.from("CustomTheme").select("*").order("createdAt", { ascending: false }),
+    supabase.from("LibrarySection").select("*").order("position", { ascending: true }).order("createdAt", { ascending: true }),
     getBool("pay.enabled"),
     getSetting("stripe.secretKey"),
   ]);
+  const artRows = artRes.data ?? [];
+  const themeRows = themeRes.data ?? [];
+  const sections = sectionRes.data ?? [];
   const art = artRows.map(artFrom);
   // Art first, so builder themes can point at uploaded art.
   applyCatalog({ ...EMPTY_CATALOG, art });
@@ -119,7 +122,7 @@ async function load() {
  * library sections, uploaded art and Premium locks. Cached briefly.
  */
 export async function getCatalog(): Promise<Catalog> {
-  if (cache && Date.now() - cache.at < 15_000) return cache.cat;
+  if (cache && Date.now() - cache.at < 60_000) return cache.cat;
   try {
     const { cat, drafts } = await load();
     cache = { at: Date.now(), cat, drafts };

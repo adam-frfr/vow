@@ -1,23 +1,32 @@
 import Link from "next/link";
-import { db } from "@/lib/db";
+import { supabase } from "@/lib/supabase";
 import { getBool, getSetting } from "@/lib/settings";
 import { Card, Empty, fmt, money, Stat } from "../parts";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminPayments() {
-  const [payments, enabled, key, amount, currency] = await Promise.all([
-    db.payment.findMany({ orderBy: { createdAt: "desc" }, take: 200 }),
+  const [payRes, enabled, key, amount, currency, premiumRes] = await Promise.all([
+    supabase.from("Payment").select("*").order("createdAt", { ascending: false }).limit(200),
     getBool("pay.enabled"),
     getSetting("stripe.secretKey"),
     getSetting("pay.amount"),
     getSetting("pay.currency"),
+    supabase.from("Site").select("*", { count: "exact", head: true }).eq("premium", true),
   ]);
+  const payments = (payRes.data ?? []) as Array<{ id: string; siteId: string; userId: string; status: string; amount: number; currency: string; createdAt: string }>;
   const paid = payments.filter((p) => p.status === "paid");
-  const sites = await db.site.findMany({ where: { id: { in: payments.map((p) => p.siteId) } }, select: { id: true, slug: true } });
-  const users = await db.user.findMany({ where: { id: { in: payments.map((p) => p.userId) } }, select: { id: true, email: true } });
-  const slug = new Map(sites.map((s) => [s.id, s.slug]));
-  const email = new Map(users.map((u) => [u.id, u.email]));
+  
+  const siteIds = [...new Set(payments.map((p) => p.siteId))];
+  const userIds = [...new Set(payments.map((p) => p.userId))];
+
+  const [{ data: sites }, { data: users }] = await Promise.all([
+    siteIds.length ? supabase.from("Site").select("id, slug").in("id", siteIds) : Promise.resolve({ data: [] }),
+    userIds.length ? supabase.from("User").select("id, email").in("id", userIds) : Promise.resolve({ data: [] }),
+  ]);
+
+  const slug = new Map((sites ?? []).map((s: { id: string; slug: string }) => [s.id, s.slug]));
+  const email = new Map((users ?? []).map((u: { id: string; email: string }) => [u.id, u.email]));
   const total = paid.reduce((s, p) => s + p.amount, 0);
 
   return (
@@ -39,7 +48,7 @@ export default async function AdminPayments() {
         <Stat label="Revenue" value={money(total, paid[0]?.currency ?? currency)} />
         <Stat label="Paid" value={paid.length} />
         <Stat label="Started, not paid" value={payments.filter((p) => p.status === "pending").length} />
-        <Stat label="Premium sites" value={await db.site.count({ where: { premium: true } })} />
+        <Stat label="Premium sites" value={premiumRes.count ?? 0} />
       </div>
       <Card title="All payments">
         {payments.length === 0 ? (
@@ -59,7 +68,7 @@ export default async function AdminPayments() {
               <tbody className="divide-y divide-line">
                 {payments.map((p) => (
                   <tr key={p.id}>
-                    <td className="py-2 pr-3 text-xs">{fmt(p.createdAt)}</td>
+                    <td className="py-2 pr-3 text-xs">{fmt(new Date(p.createdAt))}</td>
                     <td className="py-2 pr-3 text-xs">/{slug.get(p.siteId) ?? "deleted"}</td>
                     <td className="py-2 pr-3 text-xs">{email.get(p.userId) ?? "deleted"}</td>
                     <td className="py-2 pr-3">{money(p.amount, p.currency)}</td>
