@@ -2,6 +2,7 @@ import "server-only";
 import { cookies } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import { db } from "./db";
+import { supabase } from "./supabase";
 import { SESSION_COOKIE, verifySession } from "./session";
 
 /** Emails listed in ADMIN_EMAILS (comma-separated) are always admins. */
@@ -17,7 +18,7 @@ async function sessionUser() {
   const store = await cookies();
   const id = await verifySession(store.get(SESSION_COOKIE)?.value);
   if (!id) return null;
-  const u = await db.user.findUnique({ where: { id }, select: { id: true, email: true, name: true, isAdmin: true, blocked: true } });
+  const { data: u } = await supabase.from("User").select("id, email, name, isAdmin, blocked").eq("id", id).maybeSingle();
   if (!u || u.blocked) return null;
   return { ...u, isAdmin: u.isAdmin || isAdminEmail(u.email) };
 }

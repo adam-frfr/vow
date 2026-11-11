@@ -1,46 +1,57 @@
 import { NextResponse } from "next/server";
-import { authSecretProblem, withSetupErrors } from "@/lib/health";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
-import { db } from "@/lib/db";
+import { supabase } from "@/lib/supabase";
 import { SESSION_COOKIE, sessionCookieOptions, signSession } from "@/lib/session";
-import { guard, ipHashOf, logSecurity } from "@/lib/security";
+import { ipHashOf } from "@/lib/security";
 
 const schema = z.object({
   email: z.string().trim().toLowerCase().email(),
   password: z.string().min(1).max(200),
 });
 
-// Constant hash so unknown emails take as long as wrong passwords.
 const DUMMY_HASH = bcrypt.hashSync("not-a-real-password", 12);
 
-export const POST = withSetupErrors(async (req: Request) => {
-  const secretProblem = authSecretProblem();
-  if (secretProblem) return NextResponse.json({ error: `The site isn't set up correctly yet. ${secretProblem}` }, { status: 500 });
-  if (!(await guard(req, "login", 10, 60_000))) {
-    return NextResponse.json({ error: "Too many attempts. Please wait a minute." }, { status: 429 });
-  }
-  const parsed = schema.safeParse(await req.json().catch(() => null));
-  if (!parsed.success) return NextResponse.json({ error: "Invalid email or password." }, { status: 400 });
+export async function POST(req: Request) {
+  try {
+    const parsed = schema.safeParse(await req.json().catch(() => null));
+    if (!parsed.success) return NextResponse.json({ error: "Invalid email or password." }, { status: 400 });
 
-  const user = await db.user.findUnique({ where: { email: parsed.data.email } });
-  const ok = await bcrypt.compare(parsed.data.password, user?.passwordHash ?? DUMMY_HASH);
-  const event = { email: parsed.data.email, ipHash: ipHashOf(req), userAgent: (req.headers.get("user-agent") ?? "").slice(0, 200) };
+    const email = parsed.data.email;
+    const { data: user, error } = await supabase
+      .from("User")
+      .select("*")
+      .eq("email", email)
+      .maybeSingle();
 
-  if (!user || !ok) {
-    await db.loginEvent.create({ data: { ...event, userId: user?.id, ok: false } });
-    await logSecurity(req, "failed_login", "login", { detail: parsed.data.email });
-    return NextResponse.json({ error: "Invalid email or password." }, { status: 401 });
-  }
-  if (user.blocked) {
-    await db.loginEvent.create({ data: { ...event, userId: user.id, ok: false } });
-    await logSecurity(req, "blocked_login", "login", { detail: parsed.data.email });
-    return NextResponse.json({ error: "This account has been suspended. Contact support if you think this is a mistake." }, { status: 403 });
-  }
+    if (error) {
+      console.error("[supabase login error]", error);
+      return NextResponse.json({ error: "Failed to connect to database. Check Supabase connection." }, { status: 500 });
+    }
 
-  await db.loginEvent.create({ data: { ...event, userId: user.id, ok: true } });
-  await db.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });
-  const res = NextResponse.json({ ok: true });
-  res.cookies.set(SESSION_COOKIE, await signSession(user.id), sessionCookieOptions);
-  return res;
-});
+    const ok = await bcrypt.compare(parsed.data.password, user?.passwordHash ?? DUMMY_HASH);
+    const event = { email, ipHash: ipHashOf(req), userAgent: (req.headers.get("user-agent") ?? "").slice(0, 200) };
+
+    if (!user || !ok) {
+      if (user?.id) {
+        await supabase.from("LoginEvent").insert({ ...event, userId: user.id, ok: false });
+      }
+      return NextResponse.json({ error: "Invalid email or password." }, { status: 401 });
+    }
+
+    if (user.blocked) {
+      await supabase.from("LoginEvent").insert({ ...event, userId: user.id, ok: false });
+      return NextResponse.json({ error: "This account has been suspended." }, { status: 403 });
+    }
+
+    await supabase.from("LoginEvent").insert({ ...event, userId: user.id, ok: true });
+    await supabase.from("User").update({ lastLoginAt: new Date().toISOString() }).eq("id", user.id);
+
+    const res = NextResponse.json({ ok: true });
+    res.cookies.set(SESSION_COOKIE, await signSession(user.id), sessionCookieOptions);
+    return res;
+  } catch (err: unknown) {
+    console.error("[login exception]", err);
+    return NextResponse.json({ error: "An unexpected error occurred during login." }, { status: 500 });
+  }
+}

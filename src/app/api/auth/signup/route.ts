@@ -1,11 +1,9 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
-import { db } from "@/lib/db";
+import { supabase } from "@/lib/supabase";
 import { SESSION_COOKIE, sessionCookieOptions, signSession } from "@/lib/session";
-import { guard, ipHashOf } from "@/lib/security";
-import { getBool } from "@/lib/settings";
-import { authSecretProblem, withSetupErrors } from "@/lib/health";
+import { ipHashOf } from "@/lib/security";
 
 const schema = z.object({
   name: z.string().trim().min(1).max(80),
@@ -13,28 +11,50 @@ const schema = z.object({
   password: z.string().min(8, "Password must be at least 8 characters").max(200),
 });
 
-export const POST = withSetupErrors(async (req: Request) => {
-  const secretProblem = authSecretProblem();
-  if (secretProblem) return NextResponse.json({ error: `The site isn't set up correctly yet. ${secretProblem}` }, { status: 500 });
-  if (!(await guard(req, "signup", 10, 60_000))) {
-    return NextResponse.json({ error: "Too many attempts. Please wait a minute." }, { status: 429 });
+export async function POST(req: Request) {
+  try {
+    const parsed = schema.safeParse(await req.json().catch(() => null));
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid details" }, { status: 400 });
+    }
+    const { name, email, password } = parsed.data;
+
+    // Check if user already exists
+    const { data: existing } = await supabase.from("User").select("id").eq("email", email).maybeSingle();
+    if (existing) {
+      return NextResponse.json({ error: "An account with that email already exists." }, { status: 409 });
+    }
+
+    const { count } = await supabase.from("User").select("*", { count: "exact", head: true });
+    const first = (count ?? 0) === 0;
+
+    const id = "u_" + Date.now() + "_" + Math.random().toString(36).slice(2, 7);
+    const passwordHash = await bcrypt.hash(password, 12);
+
+    const { data: user, error } = await supabase
+      .from("User")
+      .insert({ id, name, email, passwordHash, isAdmin: first })
+      .select()
+      .single();
+
+    if (error || !user) {
+      console.error("[supabase signup error]", error);
+      return NextResponse.json({ error: "Could not create account. Please try again." }, { status: 500 });
+    }
+
+    await supabase.from("LoginEvent").insert({
+      userId: user.id,
+      email,
+      ok: true,
+      ipHash: ipHashOf(req),
+      userAgent: (req.headers.get("user-agent") ?? "").slice(0, 200),
+    });
+
+    const res = NextResponse.json({ ok: true });
+    res.cookies.set(SESSION_COOKIE, await signSession(user.id), sessionCookieOptions);
+    return res;
+  } catch (err: unknown) {
+    console.error("[signup exception]", err);
+    return NextResponse.json({ error: "An unexpected error occurred during signup." }, { status: 500 });
   }
-  if (!(await getBool("site.signupsOpen"))) {
-    return NextResponse.json({ error: "New sign-ups are paused right now. Please try again later." }, { status: 403 });
-  }
-  const parsed = schema.safeParse(await req.json().catch(() => null));
-  if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid details" }, { status: 400 });
-  }
-  const { name, email, password } = parsed.data;
-  if (await db.user.findUnique({ where: { email } })) {
-    return NextResponse.json({ error: "An account with that email already exists." }, { status: 409 });
-  }
-  // The very first account on a fresh deploy becomes the admin (no setup step needed).
-  const first = (await db.user.count()) === 0;
-  const user = await db.user.create({ data: { name, email, passwordHash: await bcrypt.hash(password, 12), lastLoginAt: new Date(), isAdmin: first } });
-  await db.loginEvent.create({ data: { userId: user.id, email, ok: true, ipHash: ipHashOf(req), userAgent: (req.headers.get("user-agent") ?? "").slice(0, 200) } });
-  const res = NextResponse.json({ ok: true });
-  res.cookies.set(SESSION_COOKIE, await signSession(user.id), sessionCookieOptions);
-  return res;
-});
+}
