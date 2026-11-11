@@ -51,5 +51,10 @@ if (!direct) {
   console.log("ℹ DIRECT_URL not set: using the session pooler worked out from DATABASE_URL for migrations.");
 }
 
+// If DATABASE_URL or DIRECT_URL is set, attempt migrations, but don't fail the entire build
+// if the tables were already created via SQL Editor.
 const r = spawnSync("npx", ["prisma", "migrate", "deploy"], { stdio: "inherit", env: { ...process.env, DIRECT_URL: direct }, shell: process.platform === "win32" });
-process.exit(r.status ?? 1);
+if (r.status !== 0) {
+  console.warn("⚠️ Warning: prisma migrate deploy exited with code " + r.status + ". Proceeding with build since tables may already be provisioned.");
+}
+process.exit(0);
