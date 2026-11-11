@@ -1,6 +1,6 @@
 import "server-only";
 import { createHmac, timingSafeEqual } from "node:crypto";
-import { db } from "./db";
+import { supabase } from "./supabase";
 import { getBool, getSetting, setSetting } from "./settings";
 
 /** Stripe REST API. STRIPE_API_BASE exists only for local testing against a mock. */
@@ -63,8 +63,18 @@ export async function createCheckout(opts: { siteId: string; userId: string; ema
       cancel_url: `${opts.origin}/dashboard/sites/${opts.siteId}?paid=cancelled`,
     },
   });
-  await db.payment.create({
-    data: { siteId: opts.siteId, userId: opts.userId, sessionId: session.id, amount: cfg.amount, currency: cfg.currency, status: "pending" },
+  const id = "pay_" + Date.now() + "_" + Math.random().toString(36).slice(2, 7);
+  const now = new Date().toISOString();
+  await supabase.from("Payment").insert({
+    id,
+    siteId: opts.siteId,
+    userId: opts.userId,
+    sessionId: session.id,
+    amount: cfg.amount,
+    currency: cfg.currency,
+    status: "pending",
+    createdAt: now,
+    updatedAt: now,
   });
   return session.url as string;
 }
@@ -72,12 +82,13 @@ export async function createCheckout(opts: { siteId: string; userId: string; ema
 /** Mark a checkout session paid (idempotent). Used by the webhook and the return-page check. */
 export async function markPaid(sessionId: string, session: { payment_status?: string; metadata?: { siteId?: string; userId?: string } }) {
   if (session.payment_status !== "paid") return false;
-  const payment = await db.payment.findUnique({ where: { sessionId } });
+  const { data: payment } = await supabase.from("Payment").select("*").eq("sessionId", sessionId).maybeSingle();
   if (!payment || payment.siteId !== session.metadata?.siteId) return false;
   if (payment.status !== "paid") {
-    await db.$transaction([
-      db.payment.update({ where: { sessionId }, data: { status: "paid" } }),
-      db.site.update({ where: { id: payment.siteId }, data: { premium: true } }),
+    const now = new Date().toISOString();
+    await Promise.all([
+      supabase.from("Payment").update({ status: "paid", updatedAt: now }).eq("sessionId", sessionId),
+      supabase.from("Site").update({ premium: true, updatedAt: now }).eq("id", payment.siteId),
     ]);
   }
   return true;
@@ -86,7 +97,7 @@ export async function markPaid(sessionId: string, session: { payment_status?: st
 /** After Stripe redirects back: confirm directly with Stripe (works even without a webhook). */
 export async function confirmSession(sessionId: string, userId: string) {
   if (!/^cs_[\w]+$/.test(sessionId)) return false;
-  const payment = await db.payment.findUnique({ where: { sessionId } });
+  const { data: payment } = await supabase.from("Payment").select("*").eq("sessionId", sessionId).maybeSingle();
   if (!payment || payment.userId !== userId) return false;
   if (payment.status === "paid") return true;
   try {

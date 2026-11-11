@@ -1,5 +1,5 @@
 import "server-only";
-import { db } from "./db";
+import { supabase } from "./supabase";
 
 /**
  * Plain-English setup problems (no secrets): used by /api/health and by
@@ -7,11 +7,6 @@ import { db } from "./db";
  */
 export async function setupProblems(): Promise<string[]> {
   const out: string[] = [];
-  const url = process.env.DATABASE_URL ?? "";
-  if (!url) {
-    out.push("DATABASE_URL is not set in Vercel → Settings → Environment Variables (then redeploy).");
-    return out;
-  }
   const problem = await databaseProblem();
   if (problem) out.push(problem);
   return out;
@@ -19,7 +14,8 @@ export async function setupProblems(): Promise<string[]> {
 
 export async function databaseProblem(): Promise<string | null> {
   try {
-    await db.user.count();
+    const { error } = await supabase.from("User").select("id", { count: "exact", head: true });
+    if (error) return explainDbError(error);
     return null;
   } catch (e) {
     return explainDbError(e);

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { db } from "@/lib/db";
+import { supabase } from "@/lib/supabase";
 import { withAdmin } from "@/lib/admin-api";
 
 const patch = z.object({ blocked: z.boolean().optional(), isAdmin: z.boolean().optional() });
@@ -13,7 +13,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     if (id === admin.id && (body.data.blocked || body.data.isAdmin === false)) {
       return NextResponse.json({ error: "You can't block yourself or remove your own admin access." }, { status: 400 });
     }
-    const user = await db.user.update({ where: { id }, data: body.data }).catch(() => null);
+    const { data: user } = await supabase.from("User").update(body.data).eq("id", id).select().maybeSingle();
     if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
     return NextResponse.json({ ok: true });
   });
@@ -23,7 +23,7 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
   return withAdmin(async (admin) => {
     const { id } = await params;
     if (id === admin.id) return NextResponse.json({ error: "You can't delete your own account here." }, { status: 400 });
-    await db.user.delete({ where: { id } }).catch(() => null);
+    await supabase.from("User").delete().eq("id", id);
     return NextResponse.json({ ok: true });
   });
 }

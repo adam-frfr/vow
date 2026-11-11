@@ -3,7 +3,7 @@ import { randomUUID } from "node:crypto";
 import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import { AwsClient } from "aws4fetch";
-import { db } from "./db";
+import { supabase } from "./supabase";
 import { getSetting } from "./settings";
 
 /**
@@ -80,8 +80,13 @@ export async function putObject(key: string, type: string, bytes: Uint8Array) {
     if (!res.ok) throw new Error(`Backblaze upload failed (${res.status}): ${(await res.text()).slice(0, 200)}`);
     return;
   }
-  const data = Buffer.from(bytes);
-  await db.storedFile.upsert({ where: { key }, create: { key, type, data, size: data.length }, update: { type, data, size: data.length } });
+  const { error } = await supabase.storage.from("photos").upload(key, bytes, {
+    contentType: type,
+    upsert: true,
+  });
+  if (error) {
+    console.error("[supabase storage upload error]", error);
+  }
 }
 
 export async function getObject(key: string): Promise<{ data: Uint8Array; type: string } | null> {
@@ -91,14 +96,15 @@ export async function getObject(key: string): Promise<{ data: Uint8Array; type: 
     if (res.ok) return { data: new Uint8Array(await res.arrayBuffer()), type: res.headers.get("content-type") || typeFor(key) };
     if (res.status !== 404) console.error(`Backblaze read failed (${res.status}) for ${key}`);
   }
-  const row = await db.storedFile.findUnique({ where: { key } });
-  return row ? { data: new Uint8Array(row.data), type: row.type } : null;
+  const { data, error } = await supabase.storage.from("photos").download(key);
+  if (error || !data) return null;
+  return { data: new Uint8Array(await data.arrayBuffer()), type: typeFor(key) };
 }
 
 export async function deleteObject(key: string) {
   const b = await b2();
   if (b) await b2Fetch(b, objectUrl(b, key), { method: "DELETE" }).catch(() => undefined);
-  await db.storedFile.delete({ where: { key } }).catch(() => undefined);
+  await supabase.storage.from("photos").remove([key]);
 }
 
 /** Checks the keys work: writes, reads back and deletes a tiny file. */
