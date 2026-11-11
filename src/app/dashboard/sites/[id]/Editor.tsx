@@ -149,13 +149,17 @@ export function Editor({
     if (showPreviewMobile === false && window.innerWidth < 1024) setNotice("Added. Open the preview to move it.");
   }
 
+  const [publishing, setPublishing] = useState(false);
+
   async function togglePublish() {
+    setPublishing(true);
     const data = await persist({ published: !published, themeId, content, customization: cz });
     if (data) {
       setPublished(data.published);
       setNotice(data.published ? "Your site is live! 🎉" : "Site unpublished.");
       router.refresh();
     }
+    setPublishing(false);
   }
 
   return (
@@ -193,8 +197,8 @@ export function Editor({
           <a href={`/${slug}`} target="_blank" className="btn btn-light hidden !px-4 !py-2 sm:inline-flex">
             View
           </a>
-          <button onClick={togglePublish} className={`btn !px-4 !py-2 ${published ? "!bg-emerald-700" : ""}`}>
-            {published ? "Live ✓" : "Publish"}
+          <button onClick={togglePublish} disabled={publishing} className={`btn !px-4 !py-2 ${published ? "!bg-emerald-700" : ""}`}>
+            {publishing ? "Updating…" : published ? "Live ✓" : "Publish"}
           </button>
         </div>
       </header>
@@ -976,10 +980,16 @@ function SettingsPanel({
   const [origin, setOrigin] = useState("");
   useEffect(() => setOrigin(window.location.origin), []);
 
+  const [pwBusy, setPwBusy] = useState(false);
+  const [slugBusy, setSlugBusy] = useState(false);
+  const [delBusy, setDelBusy] = useState(false);
+
   async function del() {
     if (!confirm("Permanently delete this site, its photos and all RSVPs? This can't be undone.")) return;
+    setDelBusy(true);
     const res = await fetch(`/api/sites/${siteId}`, { method: "DELETE" });
     if (res.ok) router.push("/dashboard");
+    else setDelBusy(false);
   }
 
   return (
@@ -990,8 +1000,16 @@ function SettingsPanel({
           <input className="min-w-0 flex-1 bg-transparent py-2.5 pr-3 outline-none" value={value} maxLength={48} onChange={(e) => setValue(e.target.value)} />
         </div>
         <div className="flex gap-2">
-          <button className="btn !py-2" disabled={value === slug} onClick={() => onSlug(value)}>
-            Save link
+          <button
+            className="btn !py-2"
+            disabled={value === slug || slugBusy}
+            onClick={async () => {
+              setSlugBusy(true);
+              await onSlug(value);
+              setSlugBusy(false);
+            }}
+          >
+            {slugBusy ? "Saving…" : "Save link"}
           </button>
           <button className="btn btn-light !py-2" onClick={() => navigator.clipboard.writeText(`${origin}/${slug}`)}>
             Copy link
@@ -1017,17 +1035,27 @@ function SettingsPanel({
           />
           <button
             className="btn !px-4 !py-2"
-            disabled={pw.trim().length < 4}
+            disabled={pw.trim().length < 4 || pwBusy}
             onClick={async () => {
+              setPwBusy(true);
               if (await onPassword(pw.trim())) setPw("");
+              setPwBusy(false);
             }}
           >
-            Save
+            {pwBusy ? "Saving…" : "Save"}
           </button>
         </div>
         {isProtected && (
-          <button className="text-sm text-stone underline" onClick={() => onPassword(null)}>
-            Remove password
+          <button
+            className="text-sm text-stone underline disabled:opacity-50"
+            disabled={pwBusy}
+            onClick={async () => {
+              setPwBusy(true);
+              await onPassword(null);
+              setPwBusy(false);
+            }}
+          >
+            {pwBusy ? "Removing…" : "Remove password"}
           </button>
         )}
       </Group>
@@ -1044,8 +1072,8 @@ function SettingsPanel({
         </Link>
       </Group>
       <Group title="Danger zone">
-        <button className="btn w-full !bg-red-700" onClick={del}>
-          Delete site
+        <button className="btn w-full !bg-red-700" disabled={delBusy} onClick={del}>
+          {delBusy ? "Deleting…" : "Delete site"}
         </button>
       </Group>
     </>

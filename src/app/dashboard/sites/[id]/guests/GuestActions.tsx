@@ -17,7 +17,7 @@ export function DeleteRsvp({ id, name }: { id: string; name: string }) {
         router.refresh();
       }}
     >
-      Remove
+      {busy ? "Removing…" : "Remove"}
     </button>
   );
 }
@@ -53,11 +53,11 @@ export function WishModeration({ wishes }: { wishes: WishRow[] }) {
               {w.hidden && (w.flagged ? " · caught by the spam filter" : " · hidden")}
             </span>
             <span className="flex gap-3">
-              <button className="underline" disabled={busy === w.id} onClick={() => act(w.id, "PATCH", !w.hidden)}>
-                {w.hidden ? "Show" : "Hide"}
+              <button className="underline disabled:opacity-50" disabled={busy === w.id} onClick={() => act(w.id, "PATCH", !w.hidden)}>
+                {busy === w.id ? "Saving…" : w.hidden ? "Show" : "Hide"}
               </button>
-              <button className="text-red-700 underline" disabled={busy === w.id} onClick={() => act(w.id, "DELETE")}>
-                Delete
+              <button className="text-red-700 underline disabled:opacity-50" disabled={busy === w.id} onClick={() => act(w.id, "DELETE")}>
+                {busy === w.id ? "Deleting…" : "Delete"}
               </button>
             </span>
           </div>

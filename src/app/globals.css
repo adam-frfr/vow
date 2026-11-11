@@ -43,7 +43,7 @@ body {
   cursor: pointer;
 }
 .btn:hover { background: #000; }
-.btn:disabled { opacity: 0.5; cursor: default; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
 .btn-light { background: transparent; color: var(--color-ink); border: 1px solid var(--color-line); }
 .btn-light:hover { background: #fff; }
 

@@ -47,7 +47,7 @@ export default async function Guests({ params }: { params: Promise<{ id: string 
             </p>
             <h1 className="mt-2 font-serif text-5xl">Guest list</h1>
           </div>
-          {site.rsvps.length > 0 && (
+          {rsvps.length > 0 && (
             <a href={`/api/sites/${site.id}/rsvps.csv`} className="btn btn-light">
               Download CSV
             </a>
@@ -56,9 +56,9 @@ export default async function Guests({ params }: { params: Promise<{ id: string 
 
         <div className="mt-10 grid grid-cols-2 gap-4 md:grid-cols-4">
           {[
-            ["Replies", site.rsvps.length],
+            ["Replies", rsvps.length],
             ["Attending", headcount],
-            ["Declined", site.rsvps.length - yes.length],
+            ["Declined", rsvps.length - yes.length],
             ["Meal choices", Object.entries(meals).map(([k, v]) => `${v} ${k}`).join(" · ") || "None yet"],
           ].map(([label, value]) => (
             <div key={label as string} className="rounded-2xl border border-line bg-white p-5">
@@ -90,7 +90,7 @@ export default async function Guests({ params }: { params: Promise<{ id: string 
               </tr>
             </thead>
             <tbody>
-              {site.rsvps.length === 0 && (
+              {rsvps.length === 0 && (
                 <tr>
                   <td colSpan={7} className="px-5 py-14 text-center text-stone">
                     No replies yet. They’ll appear here the moment guests respond.
@@ -125,7 +125,7 @@ export default async function Guests({ params }: { params: Promise<{ id: string 
 
         <h2 className="mt-16 font-serif text-4xl">Thank-you notes</h2>
         <p className="mb-6 mt-1 text-stone">After the wedding: a personal draft for every guest who replied, ready to copy into a card or message.</p>
-        <ThankYouNotes siteId={site.id} hasGuests={site.rsvps.length > 0} />
+        <ThankYouNotes siteId={site.id} hasGuests={rsvps.length > 0} />
 
         <h2 className="mt-16 font-serif text-4xl">Guestbook</h2>
         <p className="mb-6 mt-1 text-stone">Notes guests left on your site. Hidden notes don&rsquo;t appear publicly.</p>
