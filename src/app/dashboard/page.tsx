@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { SiteHeader } from "@/components/ui/SiteHeader";
 import { requireUser } from "@/lib/auth";
-import { db } from "@/lib/db";
+import { supabase } from "@/lib/supabase";
 import { formatDate, parseContent, parseCustomization } from "@/lib/content";
 import { getTheme, img } from "@/lib/themes";
 import { getSetting } from "@/lib/settings";
@@ -12,11 +12,13 @@ export const metadata: Metadata = { title: "My sites" };
 
 export default async function Dashboard() {
   const user = await requireUser();
-  const sites = await db.site.findMany({
-    where: { userId: user.id },
-    orderBy: { updatedAt: "desc" },
-    include: { _count: { select: { rsvps: true } }, rsvps: { select: { attending: true, guests: true } } },
-  });
+  const { data: rawSites } = await supabase
+    .from("Site")
+    .select("*, rsvps:Rsvp(attending, guests)")
+    .eq("userId", user.id)
+    .order("updatedAt", { ascending: false });
+
+  const sites = rawSites ?? [];
   const announcement = await getSetting("site.announcement");
 
   return (
@@ -58,7 +60,8 @@ export default async function Dashboard() {
               const c = parseContent(s.content);
               const t = getTheme(s.themeId);
               const cover = parseCustomization(s.customization).coverUrl;
-              const yes = s.rsvps.filter((r) => r.attending).reduce((n, r) => n + r.guests, 0);
+              const rsvps = (s.rsvps as { attending: boolean; guests: number }[]) || [];
+              const yes = rsvps.filter((r) => r.attending).reduce((n, r) => n + r.guests, 0);
               return (
                 <div key={s.id} className="overflow-hidden rounded-2xl border border-line bg-white">
                   <div className="relative h-48" style={{ background: t.palette.bg }}>
