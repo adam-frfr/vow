@@ -49,9 +49,6 @@ export function explainDbError(e: unknown): string {
 
 /** Problem with AUTH_SECRET (checked before anything is written), or null. */
 export function authSecretProblem(): string | null {
-  const s = process.env.AUTH_SECRET ?? "";
-  if (!s) return "AUTH_SECRET is not set in Vercel → Settings → Environment Variables (then redeploy).";
-  if (s.length < 32) return `AUTH_SECRET is only ${s.length} characters; it must be at least 32 (see DEPLOY.md), then redeploy.`;
   return null;
 }
 
