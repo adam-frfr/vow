@@ -88,7 +88,7 @@ export default async function Dashboard() {
                     <div className="mt-1 text-sm text-stone">/{s.slug}</div>
                     <div className="mt-4 flex gap-6 text-sm">
                       <span>
-                        <b className="font-serif text-2xl">{s._count.rsvps}</b> replies
+                        <b className="font-serif text-2xl">{rsvps.length}</b> replies
                       </span>
                       <span>
                         <b className="font-serif text-2xl">{yes}</b> attending
