@@ -1,23 +1,20 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { getCutout, getFloral } from "@/lib/assets";
+import { InkBloom } from "@/components/invite/motion/InkBloom";
 import { ScrollSequence } from "@/components/invite/motion/ScrollSequence";
 
 const fade = (p: number, a: number, b: number) => Math.min(1, Math.max(0, (p - a) / (b - a)));
 
-/** Horizontal painted floral garland across the top of the landing page */
+/** Painted florals that bloom in around the landing headline. */
 export function HeroFlorals() {
-  const garland = getFloral("garland-pink-roses");
-  if (!garland) return null;
+  const corner = getFloral("corner-pink")!;
+  const spray = getFloral("peony-pink")!;
   return (
-    <div className="lp-garland-wrap">
-      <img
-        src={`/florals/${garland.id}.webp`}
-        alt=""
-        className="lp-garland-img"
-      />
-    </div>
+    <>
+      <InkBloom floral={corner} origin="tr" auto className="lp-fl lp-fl--tr" />
+      <InkBloom floral={spray} origin="bl" auto delay={700} className="lp-fl lp-fl--bl" />
+    </>
   );
 }
 
