@@ -1,5 +1,5 @@
 import { getUserId } from "@/lib/auth";
-import { db } from "@/lib/db";
+import { supabase } from "@/lib/supabase";
 import { parseContent } from "@/lib/content";
 import { hasSiteAccess } from "@/lib/site-access";
 
@@ -21,7 +21,7 @@ const p2 = (n: number) => String(n).padStart(2, "0");
 
 export async function GET(_req: Request, { params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const site = await db.site.findUnique({ where: { slug } });
+  const { data: site } = await supabase.from("Site").select("*").eq("slug", slug).maybeSingle();
   const userId = await getUserId();
   if (!site || (!site.published && userId !== site.userId)) return new Response("Not found", { status: 404 });
   if (!(await hasSiteAccess(site, userId))) return new Response("Forbidden", { status: 403 });

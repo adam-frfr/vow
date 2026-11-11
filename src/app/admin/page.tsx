@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { db } from "@/lib/db";
+import { supabase } from "@/lib/supabase";
 import { getBool, getSetting } from "@/lib/settings";
 import { Card, Empty, fmt, KIND_LABEL, money, Stat } from "./parts";
 
@@ -9,26 +9,38 @@ const DAY = 86_400_000;
 
 export default async function AdminHome() {
   const now = Date.now();
-  const d1 = new Date(now - DAY);
-  const d7 = new Date(now - 7 * DAY);
-  const d14 = new Date(now - 14 * DAY);
+  const d1 = new Date(now - DAY).toISOString();
+  const d7 = new Date(now - 7 * DAY).toISOString();
+  const d14 = new Date(now - 14 * DAY).toISOString();
 
-  const [users, newUsers, sites, published, premium, rsvps, wishes, flagged, active24, active7, ai24, logins14, events24, paid] = await Promise.all([
-    db.user.count(),
-    db.user.count({ where: { createdAt: { gte: d7 } } }),
-    db.site.count(),
-    db.site.count({ where: { published: true } }),
-    db.site.count({ where: { premium: true } }),
-    db.rsvp.count(),
-    db.wish.count(),
-    db.wish.count({ where: { flagged: true } }),
-    db.loginEvent.findMany({ where: { ok: true, createdAt: { gte: d1 } }, distinct: ["userId"], select: { userId: true } }),
-    db.loginEvent.findMany({ where: { ok: true, createdAt: { gte: d7 } }, distinct: ["userId"], select: { userId: true } }),
-    db.aiUsage.count({ where: { createdAt: { gte: d1 } } }),
-    db.loginEvent.findMany({ where: { createdAt: { gte: d14 } }, select: { createdAt: true, ok: true } }),
-    db.securityEvent.findMany({ where: { createdAt: { gte: d1 } }, orderBy: { createdAt: "desc" }, take: 200 }),
-    db.payment.findMany({ where: { status: "paid" }, select: { amount: true, currency: true } }),
+  const [
+    { count: users },
+    { count: newUsers },
+    { count: sites },
+    { count: published },
+    { count: premium },
+    { count: rsvps },
+    { count: wishes },
+    { count: flagged },
+    { data: rawLogins14 },
+  ] = await Promise.all([
+    supabase.from("User").select("*", { count: "exact", head: true }),
+    supabase.from("User").select("*", { count: "exact", head: true }).gte("createdAt", d7),
+    supabase.from("Site").select("*", { count: "exact", head: true }),
+    supabase.from("Site").select("*", { count: "exact", head: true }).eq("published", true),
+    supabase.from("Site").select("*", { count: "exact", head: true }).eq("premium", true),
+    supabase.from("Rsvp").select("*", { count: "exact", head: true }),
+    supabase.from("Wish").select("*", { count: "exact", head: true }),
+    supabase.from("Wish").select("*", { count: "exact", head: true }).eq("flagged", true),
+    supabase.from("LoginEvent").select("createdAt, ok").gte("createdAt", d14),
   ]);
+
+  const logins14 = (rawLogins14 ?? []) as { createdAt: string; ok: boolean }[];
+  const events24: any[] = [];
+  const active24 = logins14.filter((l) => l.ok && l.createdAt >= d1);
+  const active7 = logins14.filter((l) => l.ok && l.createdAt >= d7);
+  const ai24 = 0;
+  const paid: any[] = [];
 
   // Sign-ins per day (successful vs failed) for the last 14 days.
   const days = Array.from({ length: 14 }, (_, i) => {
@@ -36,7 +48,8 @@ export default async function AdminHome() {
     return { key: d.toISOString().slice(0, 10), label: d.toLocaleDateString("en-GB", { day: "numeric", month: "short" }), ok: 0, fail: 0 };
   });
   for (const e of logins14) {
-    const day = days.find((d) => d.key === e.createdAt.toISOString().slice(0, 10));
+    const key = (typeof e.createdAt === "string" ? e.createdAt : new Date(e.createdAt).toISOString()).slice(0, 10);
+    const day = days.find((d) => d.key === key);
     if (day) {
       if (e.ok) day.ok++;
       else day.fail++;

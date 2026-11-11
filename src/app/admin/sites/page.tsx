@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { db } from "@/lib/db";
+import { supabase } from "@/lib/supabase";
 import { parseContent } from "@/lib/content";
 import { getTheme } from "@/lib/themes";
 import { AdminButton } from "../ui";
@@ -9,12 +9,26 @@ export const dynamic = "force-dynamic";
 
 export default async function AdminSites({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
   const { q = "" } = await searchParams;
-  const sites = await db.site.findMany({
-    where: q ? { OR: [{ slug: { contains: q, mode: "insensitive" } }, { user: { email: { contains: q, mode: "insensitive" } } }] } : {},
-    orderBy: { updatedAt: "desc" },
-    take: 200,
-    include: { user: { select: { email: true, blocked: true } }, _count: { select: { rsvps: true, wishes: true, photos: true } } },
-  });
+  let query = supabase
+    .from("Site")
+    .select("*, user:User(email, blocked), rsvps:Rsvp(id), wishes:Wish(id), photos:Photo(id)")
+    .order("updatedAt", { ascending: false })
+    .limit(200);
+
+  if (q) {
+    query = query.ilike("slug", `%${q}%`);
+  }
+
+  const { data: rawSites } = await query;
+  const sites = (rawSites ?? []).map((s: any) => ({
+    ...s,
+    user: s.user ?? { email: "", blocked: false },
+    _count: {
+      rsvps: s.rsvps?.length ?? 0,
+      wishes: s.wishes?.length ?? 0,
+      photos: s.photos?.length ?? 0,
+    },
+  }));
 
   return (
     <div className="space-y-6">

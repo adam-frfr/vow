@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth";
-import { db } from "@/lib/db";
+import { supabase } from "@/lib/supabase";
 import { parseContent, parseCustomization } from "@/lib/content";
 import { CardStudio } from "./CardStudio";
 import { getCatalog } from "@/lib/catalog";
@@ -14,7 +14,7 @@ export const metadata: Metadata = { title: "Invitation card" };
 export default async function CardPage({ params }: { params: Promise<{ id: string }> }) {
   const user = await requireUser();
   const { id } = await params;
-  const site = await db.site.findFirst({ where: { id, userId: user.id } });
+  const { data: site } = await supabase.from("Site").select("*").eq("id", id).eq("userId", user.id).maybeSingle();
   if (!site) notFound();
   const catalog = await getCatalog();
   return (

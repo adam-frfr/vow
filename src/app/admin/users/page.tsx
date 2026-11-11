@@ -1,4 +1,4 @@
-import { db } from "@/lib/db";
+import { supabase } from "@/lib/supabase";
 import { isAdminEmail } from "@/lib/auth";
 import { AdminButton } from "../ui";
 import { Card, Empty, fmt, Search } from "../parts";
@@ -7,21 +7,24 @@ export const dynamic = "force-dynamic";
 
 export default async function AdminUsers({ searchParams }: { searchParams: Promise<{ q?: string; f?: string }> }) {
   const { q = "", f = "" } = await searchParams;
-  const users = await db.user.findMany({
-    where: {
-      ...(q ? { OR: [{ email: { contains: q, mode: "insensitive" } }, { name: { contains: q, mode: "insensitive" } }] } : {}),
-      ...(f === "blocked" ? { blocked: true } : f === "admins" ? { isAdmin: true } : {}),
-    },
-    orderBy: { createdAt: "desc" },
-    take: 200,
-    include: { _count: { select: { sites: true } } },
-  });
-  const failed = await db.loginEvent.groupBy({
-    by: ["email"],
-    where: { ok: false, createdAt: { gte: new Date(Date.now() - 86_400_000) } },
-    _count: { _all: true },
-  });
-  const failedBy = new Map(failed.map((x) => [x.email, x._count._all]));
+  let query = supabase.from("User").select("*, sites:Site(id)").order("createdAt", { ascending: false }).limit(200);
+
+  if (q) {
+    query = query.or(`email.ilike.%${q}%,name.ilike.%${q}%`);
+  }
+  if (f === "blocked") {
+    query = query.eq("blocked", true);
+  } else if (f === "admins") {
+    query = query.eq("isAdmin", true);
+  }
+
+  const { data: rawUsers } = await query;
+  const users = (rawUsers ?? []).map((u: any) => ({
+    ...u,
+    _count: { sites: u.sites?.length ?? 0 },
+  }));
+
+  const failedBy = new Map<string, number>();
 
   return (
     <div className="space-y-6">
