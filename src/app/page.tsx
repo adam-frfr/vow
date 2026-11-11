@@ -11,7 +11,7 @@ import { visibleCollections, visibleTemplates, visibleThemes } from "@/lib/catal
 
 /** Re-checked every minute so admin changes (hidden themes, designs) show up. */
 export const revalidate = 60;
-import { BloomAside, CandleDemo, HeroFlorals } from "./LandingMotion";
+import { BloomAside, CandleDemo } from "./LandingMotion";
 
 const FAN = ["atelier-peony", "candlelit-noir", "great-wave"];
 /** A dozen designs that show the range; the rest are one click away. */
@@ -48,7 +48,6 @@ export default async function Home() {
       <SiteHeader />
 
       <section className="lp-hero">
-        <HeroFlorals />
         <div className="lp-hero-copy">
           <p className="lp-k">Wedding websites</p>
           <h1>
