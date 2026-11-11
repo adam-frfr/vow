@@ -10,8 +10,10 @@ const fade = (p: number, a: number, b: number) => Math.min(1, Math.max(0, (p - a
 export function HeroFlorals() {
   const corner = getFloral("corner-pink")!;
   const spray = getFloral("peony-pink")!;
+  const leftFl = getFloral("corner-tulips") || corner;
   return (
     <>
+      <InkBloom floral={leftFl} origin="tl" auto delay={200} className="lp-fl lp-fl--tl" />
       <InkBloom floral={corner} origin="tr" auto className="lp-fl lp-fl--tr" />
       <InkBloom floral={spray} origin="bl" auto delay={700} className="lp-fl lp-fl--bl" />
     </>
