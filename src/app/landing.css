@@ -3,10 +3,9 @@
 .lp-hero { position: relative; overflow: hidden; display: grid; gap: 3rem; align-items: center; padding: 5rem 1.25rem 4rem; max-width: 1280px; margin: 0 auto; min-height: calc(100svh - 64px); }
 @media (min-width: 1000px) { .lp-hero { grid-template-columns: 1.05fr 1fr; padding: 4rem 2.5rem; } }
 .lp-fl { position: absolute; pointer-events: none; z-index: 0; }
-.lp-fl--tr { top: -20px; right: -20px; width: min(44vw, 520px); filter: drop-shadow(0 15px 30px rgba(138, 106, 75, 0.08)); }
-.lp-fl--bl { bottom: -60px; right: 8%; width: min(28vw, 320px); opacity: 0.95; filter: drop-shadow(0 12px 24px rgba(138, 106, 75, 0.06)); }
-.lp-fl--tl { top: -30px; left: -30px; width: min(32vw, 360px); opacity: 0.85; transform: rotate(180deg); filter: drop-shadow(0 10px 20px rgba(138, 106, 75, 0.05)); }
-@media (max-width: 999px) { .lp-fl--bl, .lp-fl--tl { display: none; } }
+.lp-fl--tr { top: -30px; right: -30px; width: min(34vw, 380px); opacity: 0.9; }
+.lp-fl--bl { bottom: -50px; right: 6%; width: min(20vw, 220px); opacity: 0.85; }
+@media (max-width: 999px) { .lp-fl--bl { display: none; } }
 .lp-hero-copy { position: relative; z-index: 1; }
 .lp-hero h1 { font-family: var(--font-serif); font-size: clamp(3rem, 7vw, 5.6rem); line-height: 1; margin-top: 1.2rem; letter-spacing: -.01em; }
 .lp-hero h1 em { color: var(--color-brand); }
